@@ -38,34 +38,33 @@ class RocketPhysics():
         Tb = [288.15, 216.65, 216.65, 228.65, 270.65, 270.65, 214.65]
         Lb = [-0.0065, 0.0, 0.001, 0.0028, 0.0, -0.0028, -0.002]
 
-        _common_term = 1 + cls.STANDARD_GRAVITY * M
         if altitude < hb[1]:
-            return (pb[0] * (Tb[0] / (Tb[0] + Lb[0] * (altitude - hb[0])))**_common_term /
-                    (R * Lb[0]))
+            return (pb[0] * (Tb[0] / (Tb[0] + Lb[0] * (altitude - hb[0])))**
+                    (1 + cls.STANDARD_GRAVITY * M / (R * Lb[0])))
 
         elif altitude < hb[2]:
-            return (pb[1] * np.exp(-cls.STANDARD_GRAVITY * M * (altitude - hb[1])) /
-                    (R * Tb[1]))
+            return (pb[1] * np.exp(-cls.STANDARD_GRAVITY * M * (altitude - hb[1]) /
+                    (R * Tb[1])))
 
         elif altitude < hb[3]:
-            return (pb[2] * (Tb[2] / (Tb[2] + Lb[2] * (altitude - hb[2])))**_common_term /
-                    (R * Lb[2]))
+            return (pb[2] * (Tb[2] / (Tb[2] + Lb[2] * (altitude - hb[2])))**
+                    (1 + cls.STANDARD_GRAVITY * M / (R * Lb[2])))
 
         elif altitude < hb[4]:
-            return (pb[3] * (Tb[3] / (Tb[3] + Lb[3] * (altitude - hb[3])))**_common_term /
-                    (R * Lb[3]))
+            return (pb[3] * (Tb[3] / (Tb[3] + Lb[3] * (altitude - hb[3])))**
+                    (1 + cls.STANDARD_GRAVITY * M / (R * Lb[3])))
 
         elif altitude < hb[5]:
-            return (pb[4] * np.exp(-cls.STANDARD_GRAVITY * M * (altitude - hb[4])) /
-                    (R * Tb[4]))
+            return (pb[4] * np.exp(-cls.STANDARD_GRAVITY * M * (altitude - hb[4]) /
+                    (R * Tb[4])))
 
         elif altitude < hb[6]:
-            return (pb[5] * (Tb[5] / (Tb[5] + Lb[5] * (altitude - hb[5])))**_common_term /
-                    (R * Lb[5]))
+            return (pb[5] * (Tb[5] / (Tb[5] + Lb[5] * (altitude - hb[5])))**
+                    (1 + cls.STANDARD_GRAVITY * M / (R * Lb[5])))
 
         elif altitude < hb[7]:
-            return (pb[6] * (Tb[6] / (Tb[6] + Lb[6] * (altitude - hb[6])))**_common_term /
-                    (R * Lb[6]))
+            return (pb[6] * (Tb[6] / (Tb[6] + Lb[6] * (altitude - hb[6])))**
+                    (1 + cls.STANDARD_GRAVITY * M / (R * Lb[6])))
 
         else:
             return 0
@@ -97,11 +96,11 @@ def main():
     fig.show()
 
     ax_speed.set_xlim(0, flight_duration)
-    ax_speed.set_ylim(-1500, 3000)
+    ax_speed.set_ylim(-1500, 1500)
     speed_plot, = ax_speed.plot([0], [0], color='black', linewidth=1)
 
     ax_delta_v.set_xlim(0, flight_duration)
-    ax_delta_v.set_ylim(-50, 50)
+    ax_delta_v.set_ylim(-100, 100)
     delta_v_plot, = ax_delta_v.plot([0], [0], color='black', linewidth=1)
 
     ax_altitude.set_xlim(0, flight_duration)
@@ -109,7 +108,7 @@ def main():
     altitude_plot, = ax_altitude.plot([0], [0], color='black', linewidth=1)
 
     ax_fuel.set_xlim(0, flight_duration)
-    ax_fuel.set_ylim(0, 100)
+    ax_fuel.set_ylim(0, fuel_mass)
     fuel_plot, = ax_fuel.plot([0], [0], color='black', linewidth=1)
 
     time_series = np.arange(0, flight_duration + dt, dt)
@@ -118,14 +117,15 @@ def main():
     altitude_series = []
     fuel_series = []
 
-    rocket = RocketPhysics(motor_isp, mass_flow, dry_mass, fuel_mass, drag_coefficient, rocket_area)
+    rocket = RocketPhysics(motor_isp, mass_flow, dry_mass, fuel_mass,
+                           drag_coefficient, rocket_area)
     input('press enter to start ...')
 
     print(altitude)
     step = 1
     for elapsed_time in time_series:
         if altitude < -100:
-            break
+            pass
 
         speed_series.append(v_rocket)
         delta_v_series.append(delta_v / dt)
@@ -144,8 +144,11 @@ def main():
             f'delta_speed: {delta_v:.1f}\n'
             f'rocket speed: {v_rocket:.0f}\n'
             f'mass fuel: {fuel_mass:.1f}\n'
-            f'height: {altitude:.0f}')
-
+            f'altitude: {altitude:.0f}\n'
+            f'thrust: {rocket.thrust() / (dry_mass + fuel_mass)}\n'
+            f'drag: {rocket.drag(altitude, v_rocket)}\n'
+            f'gravity: {rocket.gravity(altitude)}\n'
+        )
 
         if fuel_mass > 0:
             fuel_mass -= mass_flow * dt
@@ -156,10 +159,10 @@ def main():
         else:
             if v_rocket < 0:
                 delta_v = (-rocket.gravity(altitude) * dt -
-                        rocket.drag(altitude, v_rocket) * dt)
+                           rocket.drag(altitude, v_rocket) * dt)
             else:
                 delta_v = (-rocket.gravity(altitude) * dt +
-                        rocket.drag(altitude, v_rocket) * dt)
+                           rocket.drag(altitude, v_rocket) * dt)
 
         v_rocket += delta_v
         altitude += v_rocket * dt
