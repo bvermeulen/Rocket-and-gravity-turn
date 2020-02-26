@@ -19,7 +19,7 @@ def Vacuum_dV(motor_isp, wet_mass, dry_mass):
     return deltaV
 
 
-def Mass_of_spaceship(wet_mass, mass_flow, mass_ship, i):
+def Mass_of_spaceship(wet_mass, mass_flow, dry_mass, i):
     """Calculates the mass of the rocket at time t
     Args:
         wet_mass (float): The mass of the ship and fuel at time t=0.
@@ -29,7 +29,7 @@ def Mass_of_spaceship(wet_mass, mass_flow, mass_ship, i):
         mass_ship (float): The new mass of the ship at timestep i.
     """
     TIME_STEP = .1
-    mass_ship = wet_mass - mass_flow * TIME_STEP * i
+    mass_ship = dry_mass + wet_mass - mass_flow * TIME_STEP * i
 
     return mass_ship
 
@@ -334,7 +334,7 @@ def Main_simulation(thrust, motor_isp, mass_flow, dry_mass, wet_mass, reference_
     a = []
     while mass_ship > dry_mass:  # and y_max < 120000:
 
-        mass_ship = Mass_of_spaceship(wet_mass, mass_flow, mass_ship, i)
+        mass_ship = Mass_of_spaceship(wet_mass, mass_flow, dry_mass, i)
         mass.append(mass_ship)
 
         force_gravity = Force_Gravity(mass_ship, altitude)
@@ -447,7 +447,7 @@ def initialize_variables(): # pragma: no cover
     """This function initializes the values for the rocket that will be used in the
     simulation. Specifics are given alongside the value.
     """
-    STANDARD_GRAVITY = 9.0665
+    STANDARD_GRAVITY = 9.80665
     #current values for falcon 9 booster
     thrust = float(
         490000)  # Motor thrust in Newtons
@@ -457,7 +457,7 @@ def initialize_variables(): # pragma: no cover
     print(mass_flow)
 
     dry_mass = float(
-        17000
+        10000
            )  # Dry mass in kg
     wet_mass = float(
         40000
@@ -472,3 +472,6 @@ def run(): # pragma: no cover
 
     dry_mass, wet_mass, mass_flow, thrust, motor_isp, reference_area = initialize_variables()#(thrust, motor_isp, mass_flow, dry_mass, wet_mass)
     Main_simulation(thrust, motor_isp, mass_flow, dry_mass, wet_mass, reference_area)
+
+if __name__ == "__main__":
+    run()

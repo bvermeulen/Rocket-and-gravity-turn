@@ -14,7 +14,7 @@ rocket = rocket_equations.RocketPhysics(motor_isp, mass_flow, dry_mass, fuel_mas
 def test_atmosphere_Density():
     '''  Tests the function rocket.Atmosphere_Density for each thermocline '''
 
-    density = rocket.atmosheric_density
+    density = rocket.atmospheric_density
 
     print(density(15_000))
 

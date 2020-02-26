@@ -25,7 +25,7 @@ class RocketPhysics():
                 (cls.RADIUS_EARTH + altitude)**2)
 
     @classmethod
-    def atmosheric_density(cls, altitude):
+    def atmospheric_density(cls, altitude):
         '''The altitude model used below is based on the standard atmospheric model used
            in modern meteorology. It takes into accout the different regression rates and
            properties of the thermoclines.
@@ -69,100 +69,111 @@ class RocketPhysics():
         else:
             return 0
 
-    def thrust(self):
-        return (self.motor_isp * self.STANDARD_GRAVITY * self.mass_flow)
+    def thrust(self, dt):
+        if self.fuel_mass > 0:
+            self.fuel_mass -= self.mass_flow * dt
+            return self.motor_isp * self.STANDARD_GRAVITY * self.mass_flow
+
+        else:
+            return 0
+
+    def mass(self):
+        return self.dry_mass + self.fuel_mass
 
     def drag(self, altitude, velocity):
         return (0.5 * self.drag_coefficient * self.rocket_area *
-                self.atmosheric_density(altitude) * velocity**2)
+                self.atmospheric_density(altitude) * velocity**2)
 
+    def show_drag(self, velocity):
+
+        fig, ax = plt.subplots()
+
+        elevation_series = []
+        drag_series = []
+        for i in range(100_000):
+            elevation_series.append(i)
+            drag_series.append(self.atmospheric_density(i))
+
+        ax.plot(elevation_series, drag_series)
+        plt.show()
 
 def main():
     motor_isp = 335
-    mass_flow = 160               # kg / s
-    dry_mass = 17_000
+    mass_flow = 149               # kg / s
+    dry_mass = 10_000
     fuel_mass = 40_000
     drag_coefficient = 0.75
     rocket_area = np.pi * 3**2
 
-    dt = 0.5                  # time interval (s)
-    v_rocket = 0              # initial speed rocket (m / s)
-    flight_duration = 600     # flight duration (s)
+    dt = 1.0                  # time interval (s)
+    v_rocket = 0.01           # initial speed rocket (m / s)
+    flight_duration = 900     # flight duration (s)
     altitude = 0              # altitude (m)
     delta_v = 0               # difference in speed (m / s)
 
-    fig, ((ax_speed, ax_delta_v), (ax_altitude, ax_fuel)) = plt.subplots(nrows=2, ncols=2, figsize=(8, 5))
+    rocket = RocketPhysics(motor_isp, mass_flow, dry_mass, fuel_mass, drag_coefficient, rocket_area)
+
+    fig, ((ax_speed, ax_delta_v), (ax_altitude, ax_mass)) = plt.subplots(nrows=2, ncols=2, figsize=(8, 5))
     plt.ion()
     fig.show()
 
     ax_speed.set_xlim(0, flight_duration)
-    ax_speed.set_ylim(-1500, 1500)
+    ax_speed.set_ylim(-2500, 2500)
     speed_plot, = ax_speed.plot([0], [0], color='black', linewidth=1)
 
     ax_delta_v.set_xlim(0, flight_duration)
-    ax_delta_v.set_ylim(-100, 100)
+    ax_delta_v.set_ylim(-20, 150)
     delta_v_plot, = ax_delta_v.plot([0], [0], color='black', linewidth=1)
 
     ax_altitude.set_xlim(0, flight_duration)
-    ax_altitude.set_ylim(0, 200_000)
+    ax_altitude.set_ylim(0, 400_000)
     altitude_plot, = ax_altitude.plot([0], [0], color='black', linewidth=1)
 
-    ax_fuel.set_xlim(0, flight_duration)
-    ax_fuel.set_ylim(0, fuel_mass)
-    fuel_plot, = ax_fuel.plot([0], [0], color='black', linewidth=1)
+    ax_mass.set_xlim(0, flight_duration)
+    ax_mass.set_ylim(0, rocket.mass())
+    mass_plot, = ax_mass.plot([0], [0], color='black', linewidth=1)
 
     time_series = np.arange(0, flight_duration + dt, dt)
     speed_series = []
     delta_v_series = []
     altitude_series = []
-    fuel_series = []
+    mass_series = []
 
-    rocket = RocketPhysics(motor_isp, mass_flow, dry_mass, fuel_mass,
-                           drag_coefficient, rocket_area)
     input('press enter to start ...')
 
-    print(altitude)
     step = 1
     for elapsed_time in time_series:
         if altitude < -100:
-            pass
+            break
 
         speed_series.append(v_rocket)
         delta_v_series.append(delta_v / dt)
         altitude_series.append(altitude)
-        fuel_series.append(fuel_mass)
+        mass_series.append(rocket.mass())
 
         speed_plot.set_data(time_series[:step], speed_series)
         delta_v_plot.set_data(time_series[:step], delta_v_series)
         altitude_plot.set_data(time_series[:step], altitude_series)
-        fuel_plot.set_data(time_series[:step], fuel_series)
+        mass_plot.set_data(time_series[:step], mass_series)
         fig.canvas.draw()
         fig.canvas.flush_events()
 
         # time.sleep(dt*0.01)
+        thrust = rocket.thrust(dt)
+
         print(f'time: {elapsed_time:.1f}\n'
-            f'delta_speed: {delta_v:.1f}\n'
+            f'delta_speed: {delta_v / dt:.1f}\n'
             f'rocket speed: {v_rocket:.0f}\n'
-            f'mass fuel: {fuel_mass:.1f}\n'
+            f'mass rocket: {rocket.mass():.1f}\n'
             f'altitude: {altitude:.0f}\n'
-            f'thrust: {rocket.thrust() / (dry_mass + fuel_mass)}\n'
-            f'drag: {rocket.drag(altitude, v_rocket)}\n'
-            f'gravity: {rocket.gravity(altitude)}\n'
+            f'thrust: {thrust / rocket.mass():.0f}\n'
+            f'drag: {rocket.drag(altitude, v_rocket) / rocket.mass():.3f}\n'
+            f'gravity: {rocket.gravity(altitude):.3f}\n'
         )
 
-        if fuel_mass > 0:
-            fuel_mass -= mass_flow * dt
-            delta_v = (rocket.thrust() / (dry_mass + fuel_mass) -
-                    rocket.gravity(altitude) * dt -
-                    rocket.drag(altitude, v_rocket) * dt)
-
-        else:
-            if v_rocket < 0:
-                delta_v = (-rocket.gravity(altitude) * dt -
-                           rocket.drag(altitude, v_rocket) * dt)
-            else:
-                delta_v = (-rocket.gravity(altitude) * dt +
-                           rocket.drag(altitude, v_rocket) * dt)
+        delta_v = ((thrust -
+                    v_rocket / abs(v_rocket) * rocket.drag(altitude, v_rocket)) / rocket.mass() -
+                   rocket.gravity(altitude)) * dt
 
         v_rocket += delta_v
         altitude += v_rocket * dt
