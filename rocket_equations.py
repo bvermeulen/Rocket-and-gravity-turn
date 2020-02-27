@@ -1,8 +1,8 @@
 ''' test some basic rocket equations
 '''
+import time  #pylint: disable=unused-import
 import matplotlib.pyplot as plt
 import numpy as np
-import time
 
 class RocketPhysics():
 
@@ -22,7 +22,7 @@ class RocketPhysics():
 
     @classmethod
     def gravity(cls, altitude):
-        return (cls.G * cls.MASS_EARTH / (cls.RADIUS_EARTH + altitude)**2)
+        return cls.G * cls.MASS_EARTH / (cls.RADIUS_EARTH + altitude)**2
 
     @classmethod
     def atmospheric_density(cls, altitude):
@@ -44,7 +44,7 @@ class RocketPhysics():
 
         elif altitude < hb[2]:
             return (pb[1] * np.exp(-cls.STANDARD_GRAVITY * M * (altitude - hb[1]) /
-                    (R * Tb[1])))
+                                   (R * Tb[1])))
 
         elif altitude < hb[3]:
             return (pb[2] * (Tb[2] / (Tb[2] + Lb[2] * (altitude - hb[2])))**
@@ -56,7 +56,7 @@ class RocketPhysics():
 
         elif altitude < hb[5]:
             return (pb[4] * np.exp(-cls.STANDARD_GRAVITY * M * (altitude - hb[4]) /
-                    (R * Tb[4])))
+                                   (R * Tb[4])))
 
         elif altitude < hb[6]:
             return (pb[5] * (Tb[5] / (Tb[5] + Lb[5] * (altitude - hb[5])))**
@@ -106,7 +106,7 @@ def main():
     altitude_min_max = (0, 400_000)
 
     rocket = RocketPhysics(
-        motor_isp, mass_flow, dry_mass, fuel_mass, drag_coefficient, rocket_area)  #heloo kjlda ;skd ;ak s;kd ;akd ;dkla
+        motor_isp, mass_flow, dry_mass, fuel_mass, drag_coefficient, rocket_area)
 
     fig, ((ax_speed, ax_delta_v), (ax_altitude, ax_mass)) = plt.subplots(
         nrows=2, ncols=2, figsize=(8, 5))
@@ -164,7 +164,7 @@ def main():
               f'thrust: {thrust / rocket.mass:.0f}\n'
               f'drag: {rocket.drag(altitude, v_rocket) / rocket.mass:.3f}\n'
               f'gravity: {rocket.gravity(altitude):.3f}\n'
-        )
+             )
 
         # to prevent division by zero
         if v_rocket == 0:
