@@ -3,6 +3,7 @@
 import time  #pylint: disable=unused-import
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.integrate import ode
 
 class RocketPhysics():
 
@@ -19,6 +20,7 @@ class RocketPhysics():
         self.fuel_mass = fuel_mass
         self.drag_coefficient = drag_coefficient
         self.rocket_area = rocket_area
+        self.v_dot = 0
 
     @classmethod
     def gravity(cls, altitude):
@@ -69,9 +71,8 @@ class RocketPhysics():
         else:
             return 0
 
-    def thrust(self, dt):
-        if self.fuel_mass > 0:
-            self.fuel_mass -= self.mass_flow * dt
+    def thrust(self):
+        if self.fuel_mass > 1:
             return self.motor_isp * self.STANDARD_GRAVITY * self.mass_flow
 
         else:
@@ -81,10 +82,38 @@ class RocketPhysics():
     def mass(self):
         return self.dry_mass + self.fuel_mass
 
+    @property
+    def acceleration(self):
+        return self.v_dot
+
     def drag(self, altitude, velocity):
         return (0.5 * self.drag_coefficient * self.rocket_area *
                 self.atmospheric_density(altitude) * velocity**2)
 
+    def derivatives_gravity_turn(self, t, state):
+        vel, alt, fuel_mass = state
+
+        self.v_dot = (
+            self.thrust() / self.mass -
+            vel / abs(vel) * self.drag(alt, vel) / self.mass -
+            self.gravity(alt)
+            )
+
+        h_dot = vel
+
+        if fuel_mass > 0:
+            mass_fuel_dot = -self.mass_flow
+            self.fuel_mass = fuel_mass
+
+        else:
+            mass_fuel_dot = 0
+
+        state_dot = np.zeros(3)
+        state_dot[0] = self.v_dot
+        state_dot[1] = h_dot
+        state_dot[2] = mass_fuel_dot
+
+        return state_dot
 
 def main():
     motor_isp = 335
@@ -94,21 +123,20 @@ def main():
     drag_coefficient = 0.75       #
     rocket_area = np.pi * 3**2    # m^2
 
-    dt = 1.0                      # time interval (s)
-    v_rocket = 0.0                # initial speed rocket (m / s)
+    time_interval = 5.0           # time interval (s)
+    v_rocket = 0.05               # initial speed rocket (m / s) - needs to be small positive     pylint: disable=line-too-long
     flight_duration = 900         # flight duration (s)
     altitude = 0                  # altitude (m)
-    delta_v = 0                   # difference in speed (m / s)
 
     # display min-max tuples y-axis
     speed_min_max = (-2500, 2500)
-    delta_v_min_max = (-20, 160)
+    acceleration_min_max = (-20, 170)
     altitude_min_max = (0, 400_000)
 
     rocket = RocketPhysics(
         motor_isp, mass_flow, dry_mass, fuel_mass, drag_coefficient, rocket_area)
 
-    fig, ((ax_speed, ax_delta_v), (ax_altitude, ax_mass)) = plt.subplots(
+    fig, ((ax_speed, ax_acceleration), (ax_altitude, ax_mass)) = plt.subplots(
         nrows=2, ncols=2, figsize=(8, 5))
     plt.ion()
     fig.show()
@@ -117,9 +145,9 @@ def main():
     ax_speed.set_ylim(speed_min_max[0], speed_min_max[1])
     speed_plot, = ax_speed.plot([0], [0], color='black', linewidth=1)
 
-    ax_delta_v.set_xlim(0, flight_duration)
-    ax_delta_v.set_ylim(delta_v_min_max[0], delta_v_min_max[1])
-    delta_v_plot, = ax_delta_v.plot([0], [0], color='black', linewidth=1)
+    ax_acceleration.set_xlim(0, flight_duration)
+    ax_acceleration.set_ylim(acceleration_min_max[0], acceleration_min_max[1])
+    acceleration_plot, = ax_acceleration.plot([0], [0], color='black', linewidth=1)
 
     ax_altitude.set_xlim(0, flight_duration)
     ax_altitude.set_ylim(altitude_min_max[0], altitude_min_max[1])
@@ -129,56 +157,54 @@ def main():
     ax_mass.set_ylim(0, rocket.mass)
     mass_plot, = ax_mass.plot([0], [0], color='black', linewidth=1)
 
-    time_series = np.arange(0, flight_duration + dt, dt)
+    time_series = np.arange(0, flight_duration + time_interval, time_interval)
     speed_series = []
-    delta_v_series = []
+    acceleration_series = []
     altitude_series = []
     mass_series = []
 
-    step = 1
-    for elapsed_time in time_series:
-        if altitude < -100:
-            break
+    rocket_gravity_turn_integrator = ode(
+        rocket.derivatives_gravity_turn).set_integrator('vode')
+
+    # zero state
+    state = np.array([v_rocket, 0, rocket.fuel_mass])
+    _time = 0
+    rocket_gravity_turn_integrator.set_initial_value(state, _time)
+
+    # launch until rocket is back at earth
+    index = 1
+    while rocket_gravity_turn_integrator.successful() and altitude > -100:
+
+        v_rocket, altitude, fuel_mass = state
 
         speed_series.append(v_rocket)
-        delta_v_series.append(delta_v / dt)
+        acceleration_series.append(rocket.acceleration)
         altitude_series.append(altitude)
         mass_series.append(rocket.mass)
 
-        speed_plot.set_data(time_series[:step], speed_series)
-        delta_v_plot.set_data(time_series[:step], delta_v_series)
-        altitude_plot.set_data(time_series[:step], altitude_series)
-        mass_plot.set_data(time_series[:step], mass_series)
+        speed_plot.set_data(time_series[:index], speed_series)
+        acceleration_plot.set_data(time_series[:index], acceleration_series)
+        altitude_plot.set_data(time_series[:index], altitude_series)
+        mass_plot.set_data(time_series[:index], mass_series)
         fig.canvas.draw()
-        fig.canvas.flush_events()
+        # fig.canvas.flush_events()
 
-        # time.sleep(dt*0.01)
-        # do not call rocket.thrust more than once per cycle as fuel_mass will be reduced!
-        thrust = rocket.thrust(dt)
-
-        print(f'time: {elapsed_time:.1f}\n'
-              f'delta_speed: {delta_v / dt:.1f}\n'
+        print(f'time: {_time:.1f}\n'
+              f'acceleration: {rocket.acceleration:.1f}\n'
               f'rocket speed: {v_rocket:.0f}\n'
               f'mass rocket: {rocket.mass:.1f}\n'
               f'altitude: {altitude:.0f}\n'
-              f'thrust: {thrust / rocket.mass:.0f}\n'
+              f'thrust: {rocket.thrust() / rocket.mass:.0f}\n'
               f'drag: {rocket.drag(altitude, v_rocket) / rocket.mass:.3f}\n'
               f'gravity: {rocket.gravity(altitude):.3f}\n'
              )
 
-        # to prevent division by zero
-        if v_rocket == 0:
-            v_rocket = 0.001
+        _time += time_interval
+        state = rocket_gravity_turn_integrator.integrate(
+            _time)
 
-        delta_v = (
-            thrust / rocket.mass -
-            v_rocket / abs(v_rocket) * rocket.drag(altitude, v_rocket) / rocket.mass -
-            rocket.gravity(altitude)) * dt
-
-        v_rocket += delta_v
-        altitude += v_rocket * dt
-        step += 1
-
+            # rocket_gravity_turn_integrator.t + time_interval)
+        index += 1
 
 if __name__ == "__main__":
     main()
