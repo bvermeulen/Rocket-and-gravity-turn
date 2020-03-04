@@ -1,1 +1,11 @@
+__pycache__
 42
+venv
+.vscode
+dummy.py
+*.log
+*.pyc
+
+
+
+

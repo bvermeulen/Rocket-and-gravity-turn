@@ -1,9 +1,13 @@
 ''' test some basic rocket equations
 '''
 import time  #pylint: disable=unused-import
+import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import ode
+from rocket_input import read_rocket_config
+
+FIGSIZE = (8, 10)
 
 class RocketPhysics():
 
@@ -127,17 +131,17 @@ class RocketPhysics():
         self.v_dot = (
             self.thrust() / self.mass -
             vel / abs(vel) * self.drag(alt, vel) / self.mass -
-            self.gravity(alt) * sin_flight_angle
+            self.gravity(alt) * cos_flight_angle
             )
 
         flight_angle_dot = (
-            (-self.gravity(alt) / vel +
-             vel / (self.RADIUS_EARTH + alt)) * cos_flight_angle -
+            (self.gravity(alt) / vel -
+             vel / (self.RADIUS_EARTH + alt)) * sin_flight_angle -
             self.initial_flight_angle / vel
             )
 
-        alt_dot = vel * sin_flight_angle
-        h_range_dot = vel * cos_flight_angle
+        alt_dot = vel * cos_flight_angle
+        h_range_dot = vel * sin_flight_angle
 
         if fuel_mass > 0:
             mass_fuel_dot = -self.mass_flow
@@ -149,33 +153,33 @@ class RocketPhysics():
         return np.array(
             [self.v_dot, flight_angle_dot, alt_dot, h_range_dot, mass_fuel_dot])
 
-def main():
-    motor_isp = 335*3
-    mass_flow = 149/2             # kg / s
-    dry_mass = 10_000             # kg
-    fuel_mass = 40_000            # kg
-    drag_coefficient = 0.75       #
-    rocket_area = np.pi * 3**2    # m^2
+def launch(rocket_config):
+    motor_isp = rocket_config.get('motor_isp')
+    mass_flow = rocket_config.get('mass_flow')
+    dry_mass = rocket_config.get('dry_mass')
+    fuel_mass = rocket_config.get('fuel_mass')
+    drag_coefficient = rocket_config.get('drag_coefficient')
+    rocket_area = rocket_config.get('rocket_area')
 
-    time_interval = 2.0           # time interval (s)
-    flight_duration = 900         # flight duration (s)
-    v_rocket = 1                  # initial speed rocket (m / s) - needs to be small positive     pylint: disable=line-too-long
-    flight_angle = np.pi / 2      # flight angle (radians) - vertical lift off
-    altitude = 0                  # altitude (m)
-    h_range = 0                   # horizontal range (m)
+    time_interval = rocket_config.get('time_interval')
+    flight_duration = rocket_config.get('flight_duration')
+    v_rocket = rocket_config.get('v_rocket')
+    flight_angle = rocket_config.get('flight_angle')
+    altitude = rocket_config.get('altitude')
+    h_range = 0
     rad_deg = 180 / np.pi
 
     # display min-max tuples y-axis
-    speed_min_max = (-3000, 3000)
-    flight_angle_min_max = (-2, 2)
-    altitude_min_max = (0, 400_000)
-    h_range_min_max = (0, 200_000)
-    acceleration_min_max = (-100, 170)
+    speed_min_max = rocket_config.get('speed_min_max')
+    flight_angle_min_max = rocket_config.get('flight_angle_min_max')
+    altitude_min_max = rocket_config.get('altitude_min_max')
+    h_range_min_max = rocket_config.get('h_range_min_max')
+    acceleration_min_max = rocket_config.get('acceleration_min_max')
 
     rocket = RocketPhysics(
         motor_isp, mass_flow, dry_mass, fuel_mass, drag_coefficient, rocket_area)
 
-    fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(8, 5))
+    fig, axes = plt.subplots(nrows=3, ncols=2, figsize=FIGSIZE)
     ax_speed, ax_flight_angle = axes[0]
     ax_altitude, ax_h_range = axes[1]
     ax_acceleration, ax_mass = axes[2]
@@ -225,7 +229,8 @@ def main():
 
     # launch until rocket is back at earth
     index = 1
-    while rocket_gravity_turn_integrator.successful() and altitude > -100:
+    while rocket_gravity_turn_integrator.successful() and altitude > -100 and \
+          _time <= flight_duration:
 
         speed_series.append(v_rocket)
         flight_angle_series.append(flight_angle)
@@ -241,19 +246,23 @@ def main():
         acceleration_plot.set_data(time_series[:index], acceleration_series)
         mass_plot.set_data(time_series[:index], mass_series)
         fig.canvas.draw()
-        # fig.canvas.flush_events()
+        fig.canvas.flush_events()
 
-        print(f'time: {_time:.1f}\n'
-              f'rocket speed: {v_rocket:.0f}\n'
-              f'flight angle: {flight_angle * rad_deg:.1f}\n'
-              f'altitude: {altitude:.0f}\n'
-              f'horizontal range: {h_range:.0f}\n'
-              f'acceleration: {rocket.acceleration:.1f}\n'
-              f'mass rocket: {rocket.mass:.1f}\n'
-              f'thrust: {rocket.thrust() / rocket.mass:.3f}\n'
-              f'drag: {rocket.drag(altitude, v_rocket) / rocket.mass:.3f}\n'
-              f'gravity: {rocket.gravity(altitude):.3f}\n'
-             )
+        status_string = (
+            f'time: {_time:.1f}\n'
+            f'rocket speed: {v_rocket:.0f}\n'
+            f'flight angle: {flight_angle * rad_deg:.1f}\n'
+            f'altitude: {altitude:.0f}\n'
+            f'horizontal range: {h_range:.0f}\n'
+            f'acceleration: {rocket.acceleration:.1f}\n'
+            f'mass rocket: {rocket.mass:.1f}\n'
+            f'thrust: {rocket.thrust() / rocket.mass:.3f}\n'
+            f'drag: {rocket.drag(altitude, v_rocket) / rocket.mass:.3f}\n'
+            f'gravity: {rocket.gravity(altitude):.3f}\n'
+        )
+
+        print(status_string)
+        # ax_text.text(0.05, 0.05, status_string)
 
         _time += time_interval
         index += 1
@@ -265,9 +274,13 @@ def main():
             rocket.initial_flight_angle = 0
 
         else:
-            rocket.initial_flight_angle = 0.3
+            rocket.initial_flight_angle = -0.3
 
 
 if __name__ == "__main__":
-    main()
+    config_file_name = 'rocket.cfg'
+    if len(sys.argv) == 2:
+        config_file_name = sys.argv[1]
+
+    launch(read_rocket_config(config_file_name))
     input('press enter to stop program ...')
