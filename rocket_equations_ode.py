@@ -26,6 +26,7 @@ class RocketPhysics():
         self.rocket_area = rocket_area
         self.v_dot = 0
         self.angle_0 = 0
+        self._throttle = 0
 
     @classmethod
     def gravity(cls, altitude):
@@ -78,7 +79,7 @@ class RocketPhysics():
 
     def thrust(self):
         if self.fuel_mass > 1:
-            return self.motor_isp * self.STANDARD_GRAVITY * self.mass_flow
+            return self.motor_isp * self.STANDARD_GRAVITY * self.mass_flow * self.throttle
 
         return 0
 
@@ -97,6 +98,14 @@ class RocketPhysics():
     @initial_flight_angle.setter
     def initial_flight_angle(self, value):
         self.angle_0 = value
+
+    @property
+    def throttle(self):
+        return  self._throttle
+
+    @throttle.setter
+    def throttle(self, value):
+        self._throttle = value
 
     def drag(self, altitude, velocity):
         return (0.5 * self.drag_coefficient * self.rocket_area *
@@ -144,7 +153,7 @@ class RocketPhysics():
         h_range_dot = vel * sin_flight_angle
 
         if fuel_mass > 0:
-            mass_fuel_dot = -self.mass_flow
+            mass_fuel_dot = -self.mass_flow * self.throttle
             self.fuel_mass = fuel_mass
 
         else:
@@ -166,6 +175,7 @@ def launch(rocket_config):
     v_rocket = rocket_config.get('v_rocket')
     flight_angle = rocket_config.get('flight_angle')
     altitude = rocket_config.get('altitude')
+    u = rocket_config.get('u')
     h_range = 0
     rad_deg = 180 / np.pi
 
@@ -182,7 +192,7 @@ def launch(rocket_config):
     fig, axes = plt.subplots(nrows=3, ncols=2, figsize=FIGSIZE)
     ax_speed, ax_flight_angle = axes[0]
     ax_altitude, ax_h_range = axes[1]
-    ax_acceleration, ax_mass = axes[2]
+    ax_throttle, ax_mass = axes[2]
 
     plt.ion()
     fig.show()
@@ -203,13 +213,17 @@ def launch(rocket_config):
     ax_h_range.set_ylim(h_range_min_max[0], h_range_min_max[1])
     h_range_plot, = ax_h_range.plot([0], [0], color='black', linewidth=1)
 
-    ax_acceleration.set_xlim(0, flight_duration)
-    ax_acceleration.set_ylim(acceleration_min_max[0], acceleration_min_max[1])
-    acceleration_plot, = ax_acceleration.plot([0], [0], color='black', linewidth=1)
+    # ax_acceleration.set_xlim(0, flight_duration)
+    # ax_acceleration.set_ylim(acceleration_min_max[0], acceleration_min_max[1])
+    # acceleration_plot, = ax_acceleration.plot([0], [0], color='black', linewidth=1)
 
     ax_mass.set_xlim(0, flight_duration)
     ax_mass.set_ylim(0, rocket.mass)
     mass_plot, = ax_mass.plot([0], [0], color='black', linewidth=1)
+
+    ax_throttle.set_xlim(0, flight_duration)
+    ax_throttle.set_ylim(0, 1.2)
+    throttle_plot, = ax_throttle.plot([0], [0], color='black', linewidth=1)
 
     time_series = np.arange(0, flight_duration + time_interval, time_interval)
     speed_series = []
@@ -217,6 +231,7 @@ def launch(rocket_config):
     altitude_series = []
     h_range_series = []
     acceleration_series = []
+    throttle_series = []
     mass_series = []
 
     rocket_gravity_turn_integrator = ode(
@@ -229,6 +244,8 @@ def launch(rocket_config):
 
     # launch until rocket is back at earth
     index = 1
+    rocket.throttle = u[0]
+
     while rocket_gravity_turn_integrator.successful() and altitude > -100 and \
           _time <= flight_duration:
 
@@ -237,13 +254,15 @@ def launch(rocket_config):
         altitude_series.append(altitude)
         h_range_series.append(h_range)
         acceleration_series.append(rocket.acceleration)
+        throttle_series.append(rocket.throttle)
         mass_series.append(rocket.mass)
 
         speed_plot.set_data(time_series[:index], speed_series)
         flight_angle_plot.set_data(time_series[:index], flight_angle_series)
         altitude_plot.set_data(time_series[:index], altitude_series)
         h_range_plot.set_data(time_series[:index], h_range_series)
-        acceleration_plot.set_data(time_series[:index], acceleration_series)
+        # acceleration_plot.set_data(time_series[:index], acceleration_series)
+        throttle_plot.set_data(time_series[:index], throttle_series)
         mass_plot.set_data(time_series[:index], mass_series)
         fig.canvas.draw()
         fig.canvas.flush_events()
@@ -266,6 +285,7 @@ def launch(rocket_config):
 
         _time += time_interval
         index += 1
+        rocket.throttle = u[index]
 
         v_rocket, flight_angle, altitude, h_range, fuel_mass = \
             rocket_gravity_turn_integrator.integrate(_time)
