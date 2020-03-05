@@ -1,6 +1,6 @@
 ''' test reprint '''
+import os
 import time
-from reprint import output
 
 
 class Console:
@@ -19,6 +19,8 @@ class Console:
             'gravity': 0
         }
 
+        os.system('clear')
+
     @property
     def status(self):
         return self.status_dict
@@ -31,16 +33,19 @@ class Console:
         ''' print the status_dict to the console with reprint output that
             clears the console before writing
         '''
-        with output(output_type='dict') as output_lines:
-            while True:
-                output_lines[' 1. time'] = f'{self.status.get("time"):.0f}'
-                output_lines[' 2. rocket speed'] = f'{self.status.get("rocket speed"):.0f}'
-                output_lines[' 3. flight angle'] = f'{self.status.get("flight angle"):.3f}'
-                output_lines[' 4. altitude'] = f'{self.status.get("altitude"):.0f}'
-                output_lines[' 5. horizontal range'] = f'{self.status.get("horizontal range"):.0f}'  #pylint: disable=line-too-long
-                output_lines[' 6. acceleration'] = f'{self.status.get("acceleration"):.0f}'
-                output_lines[' 7. mass rocket'] = f'{self.status.get("mass rocket"):.0f}'
-                output_lines[' 8. thrust'] = f'{self.status.get("thrust"):.3f}'
-                output_lines[' 9. drag'] = f'{self.status.get("drag"):.3f}'
-                output_lines['10. gravity'] = f'{self.status.get("gravity"):.3f}'
-                time.sleep(0.5)
+        while True:
+            os.system('clear')
+            status_message = (
+                f'time: {self.status.get("time"):.0f}\n'
+                f'rocket speed: {self.status.get("rocket speed"):.0f}\n'
+                f'flight angle: {self.status.get("flight angle"):.3f}\n'
+                f'altitude: {self.status.get("altitude"):.0f}\n'
+                f'horizontal range: {self.status.get("horizontal range"):.0f}\n'
+                f'acceleration: {self.status.get("acceleration"):.0f}\n'
+                f'mass rocket: {self.status.get("mass rocket"):.0f}\n'
+                f'thrust: {self.status.get("thrust"):.3f}\n'
+                f'drag: {self.status.get("drag"):.3f}\n'
+                f'gravity: {self.status.get("gravity"):.3f}\n'
+            )
+            print(status_message)
+            time.sleep(0.5)
