@@ -1,11 +1,14 @@
 ''' test some basic rocket equations
 '''
+import threading
 import time  #pylint: disable=unused-import
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import ode
 from rocket_input import read_rocket_config
+from rocket_output import Console
+
 
 FIGSIZE = (8, 10)
 
@@ -163,6 +166,10 @@ class RocketPhysics():
             [self.v_dot, flight_angle_dot, alt_dot, h_range_dot, mass_fuel_dot])
 
 def launch(rocket_config):
+    console = Console()
+    x = threading.Thread(target=console.print_status)
+    x.start()
+
     motor_isp = rocket_config.get('motor_isp')
     mass_flow = rocket_config.get('mass_flow')
     dry_mass = rocket_config.get('dry_mass')
@@ -219,11 +226,11 @@ def launch(rocket_config):
 
     ax_mass.set_xlim(0, flight_duration)
     ax_mass.set_ylim(0, rocket.mass)
-    mass_plot, = ax_mass.plot([0], [0], color='black', linewidth=1)
+    mass_plot, = ax_mass.plot([0], [0], color='red', linewidth=3)
 
     ax_throttle.set_xlim(0, flight_duration)
     ax_throttle.set_ylim(0, 1.2)
-    throttle_plot, = ax_throttle.plot([0], [0], color='black', linewidth=1)
+    throttle_plot, = ax_throttle.plot([0], [0], color='red', linewidth=3)
 
     time_series = np.arange(0, flight_duration + time_interval, time_interval)
     speed_series = []
@@ -267,21 +274,18 @@ def launch(rocket_config):
         fig.canvas.draw()
         fig.canvas.flush_events()
 
-        status_string = (
-            f'time: {_time:.1f}\n'
-            f'rocket speed: {v_rocket:.0f}\n'
-            f'flight angle: {flight_angle * rad_deg:.1f}\n'
-            f'altitude: {altitude:.0f}\n'
-            f'horizontal range: {h_range:.0f}\n'
-            f'acceleration: {rocket.acceleration:.1f}\n'
-            f'mass rocket: {rocket.mass:.1f}\n'
-            f'thrust: {rocket.thrust() / rocket.mass:.3f}\n'
-            f'drag: {rocket.drag(altitude, v_rocket) / rocket.mass:.3f}\n'
-            f'gravity: {rocket.gravity(altitude):.3f}\n'
-        )
-
-        print(status_string)
-        # ax_text.text(0.05, 0.05, status_string)
+        console.status = {
+            'time': _time,
+            'rocket speed': v_rocket,
+            'flight angle': flight_angle * rad_deg,
+            'altitude': altitude,
+            'horizontal range': h_range,
+            'acceleration': rocket.acceleration,
+            'mass rocket': rocket.mass,
+            'thrust': rocket.thrust() / rocket.mass,
+            'drag': rocket.drag(altitude, v_rocket) / rocket.mass,
+            'gravity': rocket.gravity(altitude)
+        }
 
         _time += time_interval
         index += 1
