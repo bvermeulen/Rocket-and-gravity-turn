@@ -1,9 +1,16 @@
-''' test reprint '''
+''' various output methods '''
 import os
 import time
 
 
 class Console:
+    ''' print the status_dict to the console every 0.5 second
+        after the system has cleared the console
+        updates to the self.status are provided to the class
+        Console by the main program
+        the method print_status should be started as a seperate
+        thread
+    '''
 
     def __init__(self):
         self.status_dict = {
@@ -30,9 +37,6 @@ class Console:
         self.status_dict = value
 
     def print_status(self):
-        ''' print the status_dict to the console with reprint output that
-            clears the console before writing
-        '''
         while True:
             os.system('clear')
             status_message = (

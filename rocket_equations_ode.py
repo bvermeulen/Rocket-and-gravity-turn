@@ -274,6 +274,7 @@ def launch(rocket_config):
         fig.canvas.draw()
         fig.canvas.flush_events()
 
+        # update the status to the console
         console.status = {
             'time': _time,
             'rocket speed': v_rocket,
