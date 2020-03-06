@@ -1,6 +1,6 @@
 ''' various output methods '''
-import os
-import time
+import curses
+import pandas as pd
 
 
 class Console:
@@ -13,43 +13,52 @@ class Console:
     '''
 
     def __init__(self):
-        self.status_dict = {
-            'time': 0,
-            'rocket speed': 0,
-            'flight angle': 0,
-            'altitude': 0,
-            'horizontal range': 0,
-            'acceleration': 0,
-            'mass rocket': 0,
-            'thrust': 0,
-            'drag': 0,
-            'gravity': 0
-        }
+        # self.window = curses.initscr()
+        pass
 
-        os.system('clear')
+    def display_status_message(self, status):
+        # self.window.clear()
+        status_message = (
+            f'time: {status.get("time"):.0f}\n'
+            f'rocket speed: {status.get("rocket speed"):.0f}\n'
+            f'flight angle: {status.get("flight angle"):.3f}\n'
+            f'altitude: {status.get("altitude"):.3f}\n'
+            f'horizontal range: {status.get("horizontal range"):.3f}\n'
+            f'acceleration: {status.get("acceleration"):.0f}\n'
+            f'mass rocket: {status.get("mass rocket"):.3f}\n'
+            f'thrust: {status.get("thrust"):.3f}\n'
+            f'drag: {status.get("drag"):.3f}\n'
+            f'gravity: {status.get("gravity"):.3f}\n'
+        )
+        # self.window.addstr(status_message)
+        # self.window.refresh()
+        print(status_message)
 
-    @property
-    def status(self):
-        return self.status_dict
+    def stop_window(self):
+        # curses.napms(10_000)
+        # self.window.refresh()
+        # curses.endwin()
+        input('press enter to stop program ...')
 
-    @status.setter
-    def status(self, value):
-        self.status_dict = value
+class OutputLog:
 
-    def print_status(self):
-        while True:
-            os.system('clear')
-            status_message = (
-                f'time: {self.status.get("time"):.0f}\n'
-                f'rocket speed: {self.status.get("rocket speed"):.0f}\n'
-                f'flight angle: {self.status.get("flight angle"):.3f}\n'
-                f'altitude: {self.status.get("altitude"):.0f}\n'
-                f'horizontal range: {self.status.get("horizontal range"):.0f}\n'
-                f'acceleration: {self.status.get("acceleration"):.0f}\n'
-                f'mass rocket: {self.status.get("mass rocket"):.0f}\n'
-                f'thrust: {self.status.get("thrust"):.3f}\n'
-                f'drag: {self.status.get("drag"):.3f}\n'
-                f'gravity: {self.status.get("gravity"):.3f}\n'
-            )
-            print(status_message)
-            time.sleep(0.5)
+    def __init__(self):
+        self.outputlog_name = 'rocket_output_log.xlsx'
+        self.log_df = pd.DataFrame(
+            columns=['t', 'm', 'v', 'beta', 'h', 'theta', 'u'])
+        self.index = 0
+
+    def log_status(self, status):
+        self.log_df.loc[self.index] = [
+            status.get('time'),
+            status.get('mass rocket'),
+            status.get('rocket speed'),
+            status.get('flight angle'),
+            status.get('altitude'),
+            status.get('horizontal range'),
+            status.get('u'),
+        ]
+        self.index += 1
+
+    def write_logger(self):
+        self.log_df.to_excel(self.outputlog_name)

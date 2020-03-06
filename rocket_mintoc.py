@@ -1,6 +1,5 @@
 ''' test some basic rocket equations
 '''
-import time  #pylint: disable=unused-import
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,15 +12,15 @@ FIGSIZE = (8, 10)
 
 class RocketPhysics():
 
-    G = 6.674 * 10**-11
-    MASS_EARTH = 5.972 * 10**24   # kg
-    RADIUS_EARTH = 6.371 * 10**6  # m
-    STANDARD_GRAVITY = 9.80665    # m / s^2
+    RADIUS_EARTH = 600_000          # m
+    STANDARD_GRAVITY = 9.81         # m / s^2
+    H = 5600                        # m
+    RHO_0 = 1.2230948554874         # kg / m^3
 
-    def __init__(self, motor_isp, mass_flow, dry_mass, fuel_mass,
+    def __init__(self, motor_isp, max_thrust, dry_mass, fuel_mass,
                  drag_coefficient, rocket_area):
         self.motor_isp = motor_isp
-        self.mass_flow = mass_flow
+        self.max_thrust = max_thrust
         self.dry_mass = dry_mass
         self.fuel_mass = fuel_mass
         self.drag_coefficient = drag_coefficient
@@ -32,58 +31,11 @@ class RocketPhysics():
 
     @classmethod
     def gravity(cls, altitude):
-        return cls.G * cls.MASS_EARTH / (cls.RADIUS_EARTH + altitude)**2
-
-    @classmethod
-    def atmospheric_density(cls, altitude):
-        '''The altitude model used below is based on the standard atmospheric model used
-           in modern meteorology. It takes into accout the different regression rates and
-           properties of the thermoclines.
-        '''
-
-        R = 8.31432   # ideal gas constant J/(mol*K)
-        M = .0289644  # molar mass of dry air, kg/mol
-        hb = [0, 11_000, 20_000, 32_000, 47_000, 51_000, 71_000, 86_000]
-        pb = [1.2250, 0.36391, 0.08803, 0.01322, 0.00143, 0.00086, 0.000064]
-        Tb = [288.15, 216.65, 216.65, 228.65, 270.65, 270.65, 214.65]
-        Lb = [-0.0065, 0.0, 0.001, 0.0028, 0.0, -0.0028, -0.002]
-
-        if altitude < hb[1]:
-            return (pb[0] * (Tb[0] / (Tb[0] + Lb[0] * (altitude - hb[0])))**
-                    (1 + cls.STANDARD_GRAVITY * M / (R * Lb[0])))
-
-        elif altitude < hb[2]:
-            return (pb[1] * np.exp(-cls.STANDARD_GRAVITY * M * (altitude - hb[1]) /
-                                   (R * Tb[1])))
-
-        elif altitude < hb[3]:
-            return (pb[2] * (Tb[2] / (Tb[2] + Lb[2] * (altitude - hb[2])))**
-                    (1 + cls.STANDARD_GRAVITY * M / (R * Lb[2])))
-
-        elif altitude < hb[4]:
-            return (pb[3] * (Tb[3] / (Tb[3] + Lb[3] * (altitude - hb[3])))**
-                    (1 + cls.STANDARD_GRAVITY * M / (R * Lb[3])))
-
-        elif altitude < hb[5]:
-            return (pb[4] * np.exp(-cls.STANDARD_GRAVITY * M * (altitude - hb[4]) /
-                                   (R * Tb[4])))
-
-        elif altitude < hb[6]:
-            return (pb[5] * (Tb[5] / (Tb[5] + Lb[5] * (altitude - hb[5])))**
-                    (1 + cls.STANDARD_GRAVITY * M / (R * Lb[5])))
-
-        elif altitude < hb[7]:
-            return (pb[6] * (Tb[6] / (Tb[6] + Lb[6] * (altitude - hb[6])))**
-                    (1 + cls.STANDARD_GRAVITY * M / (R * Lb[6])))
-
-        else:
-            return 0
+        return (
+            cls.STANDARD_GRAVITY * (cls.RADIUS_EARTH / (cls.RADIUS_EARTH + altitude))**2)
 
     def thrust(self):
-        if self.fuel_mass > 1:
-            return self.motor_isp * self.STANDARD_GRAVITY * self.mass_flow * self.throttle
-
-        return 0
+        return  self.max_thrust * self.throttle
 
     @property
     def mass(self):
@@ -110,8 +62,8 @@ class RocketPhysics():
         self._throttle = value
 
     def drag(self, altitude, velocity):
-        return (0.5 * self.drag_coefficient * self.rocket_area *
-                self.atmospheric_density(altitude) * velocity**2)
+        k = self.rocket_area * self.drag_coefficient * velocity * velocity
+        return 0.5 * self.RHO_0 * k * np.exp(-altitude / self.H)
 
     def derivatives_gravity_turn(self, t, state):
         ''' calculation of derivatives (annotated with _dot) for a rocket gravity
@@ -147,19 +99,14 @@ class RocketPhysics():
 
         flight_angle_dot = (
             (self.gravity(alt) / vel -
-             vel / (self.RADIUS_EARTH + alt)) * sin_flight_angle -
-            self.initial_flight_angle / vel
+             vel / (self.RADIUS_EARTH + alt)) * sin_flight_angle
             )
 
         alt_dot = vel * cos_flight_angle
-        h_range_dot = vel * sin_flight_angle
+        h_range_dot = vel * sin_flight_angle / (self.RADIUS_EARTH + alt)
 
-        if fuel_mass > 0:
-            mass_fuel_dot = -self.mass_flow * self.throttle
-            self.fuel_mass = fuel_mass
-
-        else:
-            mass_fuel_dot = 0
+        mass_fuel_dot = -self.thrust() / self.motor_isp / self.STANDARD_GRAVITY
+        self.fuel_mass = fuel_mass
 
         return np.array(
             [self.v_dot, flight_angle_dot, alt_dot, h_range_dot, mass_fuel_dot])
@@ -169,7 +116,7 @@ def launch(rocket_config):
     logger = OutputLog()
 
     motor_isp = rocket_config.get('motor_isp')
-    mass_flow = rocket_config.get('mass_flow')
+    max_thrust = rocket_config.get('max_thrust')
     dry_mass = rocket_config.get('dry_mass')
     fuel_mass = rocket_config.get('fuel_mass')
     drag_coefficient = rocket_config.get('drag_coefficient')
@@ -192,7 +139,7 @@ def launch(rocket_config):
     acceleration_min_max = rocket_config.get('acceleration_min_max')
 
     rocket = RocketPhysics(
-        motor_isp, mass_flow, dry_mass, fuel_mass, drag_coefficient, rocket_area)
+        motor_isp, max_thrust, dry_mass, fuel_mass, drag_coefficient, rocket_area)
 
     fig, axes = plt.subplots(nrows=3, ncols=2, figsize=FIGSIZE)
     ax_speed, ax_flight_angle = axes[0]
@@ -250,14 +197,13 @@ def launch(rocket_config):
 
     # launch until rocket is back at earth
     index = 0
-
     while rocket_gravity_turn_integrator.successful() and altitude > -100 and \
           _time <= flight_duration:
 
         speed_series.append(v_rocket)
-        flight_angle_series.append(flight_angle)
+        flight_angle_series.append(flight_angle * rad_deg)
         altitude_series.append(altitude)
-        h_range_series.append(h_range)
+        h_range_series.append(h_range * rad_deg)
         acceleration_series.append(rocket.acceleration)
         throttle_series.append(rocket.throttle)
         mass_series.append(rocket.mass)
@@ -278,7 +224,7 @@ def launch(rocket_config):
             'rocket speed': v_rocket,
             'flight angle': flight_angle * rad_deg,
             'altitude': altitude,
-            'horizontal range': h_range,
+            'horizontal range': h_range * rad_deg,
             'acceleration': rocket.acceleration,
             'mass rocket': rocket.mass,
             'thrust': rocket.thrust() / rocket.mass,

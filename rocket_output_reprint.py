@@ -33,14 +33,24 @@ class Console:
         '''
         with output(output_type='dict') as output_lines:
             while True:
-                output_lines[' 1. time'] = f'{self.status.get("time"):.0f}'
-                output_lines[' 2. rocket speed'] = f'{self.status.get("rocket speed"):.0f}'
-                output_lines[' 3. flight angle'] = f'{self.status.get("flight angle"):.3f}'
-                output_lines[' 4. altitude'] = f'{self.status.get("altitude"):.0f}'
-                output_lines[' 5. horizontal range'] = f'{self.status.get("horizontal range"):.0f}'  #pylint: disable=line-too-long
-                output_lines[' 6. acceleration'] = f'{self.status.get("acceleration"):.0f}'
-                output_lines[' 7. mass rocket'] = f'{self.status.get("mass rocket"):.0f}'
-                output_lines[' 8. thrust'] = f'{self.status.get("thrust"):.3f}'
-                output_lines[' 9. drag'] = f'{self.status.get("drag"):.3f}'
-                output_lines['10. gravity'] = f'{self.status.get("gravity"):.3f}'
+                output_lines[' 1. time'] = (
+                    f'{self.status.get("time"):.0f}')
+                output_lines[' 2. rocket speed'] = (
+                    f'{self.status.get("rocket speed"):.0f}')
+                output_lines[' 3. flight angle'] = (
+                    f'{self.status.get("flight angle"):.3f}')
+                output_lines[' 4. altitude'] = (
+                    f'{self.status.get("altitude"):.0f}')
+                output_lines[' 5. horizontal range'] = (
+                    f'{self.status.get("horizontal range"):.0f}')
+                output_lines[' 6. acceleration'] = (
+                    f'{self.status.get("acceleration"):.0f}')
+                output_lines[' 7. mass rocket'] = (
+                    f'{self.status.get("mass rocket"):.0f}')
+                output_lines[' 8. thrust'] = (
+                    f'{self.status.get("thrust"):.3f}')
+                output_lines[' 9. drag'] = (
+                    f'{self.status.get("drag"):.3f}')
+                output_lines['10. gravity'] = (
+                    f'{self.status.get("gravity"):.3f}')
                 time.sleep(0.5)

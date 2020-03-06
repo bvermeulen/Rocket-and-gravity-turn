@@ -5,7 +5,7 @@ venv
 dummy.py
 *.log
 *.pyc
-
-
-
+test_reprint.py
+*.xlsx
+test_reprint.py
 

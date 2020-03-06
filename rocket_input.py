@@ -34,7 +34,7 @@ def read_rocket_config(config_file_name):
                 pass
 
     keys = ['dry_mass', 'fuel_mass', 'motor_isp',
-            'mass_flow', 'drag_coefficient', 'rocket_area',
+            'max_thrust', 'drag_coefficient', 'rocket_area',
             'v_rocket', 'flight_angle', 'altitude',
             'time_interval', 'flight_duration',
             'speed_min_max', 'flight_angle_min_max', 'altitude_min_max',
