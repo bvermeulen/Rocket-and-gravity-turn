@@ -9,7 +9,7 @@ from rocket_output import Console, OutputLog
 
 
 FIGSIZE = (6, 8)
-angle_adj = 1.0
+angle_adj = 1.00
 
 class RocketPhysics():
 
@@ -65,7 +65,7 @@ class RocketPhysics():
     def drag(self, altitude, velocity):
         k = (0.5e3 * self.RHO_0 * self.rocket_area *
              self.drag_coefficient
-         )
+            )
         return k * np.exp(-altitude / self.H) * velocity * velocity
 
     def derivatives_gravity_turn(self, t, state):
@@ -203,6 +203,7 @@ def launch(rocket_config):
     while rocket_gravity_turn_integrator.successful() and altitude > -100 and \
           _time <= flight_duration:
 
+        rocket.throttle = u[index]
         speed_series.append(v_rocket)
         flight_angle_series.append(flight_angle * rad_deg)
         altitude_series.append(altitude)
@@ -240,10 +241,9 @@ def launch(rocket_config):
 
         _time += time_interval
         index += 1
-        rocket.throttle = u[index]
-
         v_rocket, flight_angle, altitude, h_range, fuel_mass = \
             rocket_gravity_turn_integrator.integrate(_time)
+
 
     console.stop_window()
     logger.write_logger()
