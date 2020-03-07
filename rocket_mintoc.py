@@ -8,14 +8,15 @@ from rocket_input import read_rocket_config
 from rocket_output import Console, OutputLog
 
 
-FIGSIZE = (8, 10)
+FIGSIZE = (6, 8)
+angle_adj = 1.0
 
 class RocketPhysics():
 
-    RADIUS_EARTH = 600_000          # m
-    STANDARD_GRAVITY = 9.81         # m / s^2
-    H = 5600                        # m
-    RHO_0 = 1.2230948554874         # kg / m^3
+    RADIUS_EARTH = 6e2
+    STANDARD_GRAVITY = 9.81e-3
+    H = 5.6
+    RHO_0 = (1 * 1.2230948554874)
 
     def __init__(self, motor_isp, max_thrust, dry_mass, fuel_mass,
                  drag_coefficient, rocket_area):
@@ -62,8 +63,10 @@ class RocketPhysics():
         self._throttle = value
 
     def drag(self, altitude, velocity):
-        k = self.rocket_area * self.drag_coefficient * velocity * velocity
-        return 0.5 * self.RHO_0 * k * np.exp(-altitude / self.H)
+        k = (0.5e3 * self.RHO_0 * self.rocket_area *
+             self.drag_coefficient
+         )
+        return k * np.exp(-altitude / self.H) * velocity * velocity
 
     def derivatives_gravity_turn(self, t, state):
         ''' calculation of derivatives (annotated with _dot) for a rocket gravity
@@ -93,17 +96,17 @@ class RocketPhysics():
 
         self.v_dot = (
             self.thrust() / self.mass -
-            vel / abs(vel) * self.drag(alt, vel) / self.mass -
+            self.drag(alt, vel) / self.mass -
             self.gravity(alt) * cos_flight_angle
-            )
-
-        flight_angle_dot = (
-            (self.gravity(alt) / vel -
-             vel / (self.RADIUS_EARTH + alt)) * sin_flight_angle
             )
 
         alt_dot = vel * cos_flight_angle
         h_range_dot = vel * sin_flight_angle / (self.RADIUS_EARTH + alt)
+
+        flight_angle_dot = (
+            self.gravity(alt) * sin_flight_angle / vel -
+            h_range_dot
+            )
 
         mass_fuel_dot = -self.thrust() / self.motor_isp / self.STANDARD_GRAVITY
         self.fuel_mass = fuel_mass
@@ -125,7 +128,7 @@ def launch(rocket_config):
     time_interval = rocket_config.get('time_interval')
     flight_duration = rocket_config.get('flight_duration')
     v_rocket = rocket_config.get('v_rocket')
-    flight_angle = rocket_config.get('flight_angle')
+    flight_angle = rocket_config.get('flight_angle') * angle_adj
     altitude = rocket_config.get('altitude')
     u = rocket_config.get('u')
     h_range = 0
@@ -237,8 +240,7 @@ def launch(rocket_config):
 
         _time += time_interval
         index += 1
-        if index < len(u):
-            rocket.throttle = u[index]
+        rocket.throttle = u[index]
 
         v_rocket, flight_angle, altitude, h_range, fuel_mass = \
             rocket_gravity_turn_integrator.integrate(_time)

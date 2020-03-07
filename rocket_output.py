@@ -1,5 +1,5 @@
 ''' various output methods '''
-import curses
+# import curses
 import pandas as pd
 
 
@@ -20,15 +20,15 @@ class Console:
         # self.window.clear()
         status_message = (
             f'time: {status.get("time"):.0f}\n'
-            f'rocket speed: {status.get("rocket speed"):.0f}\n'
+            f'rocket speed: {status.get("rocket speed"):.3f}\n'
             f'flight angle: {status.get("flight angle"):.3f}\n'
             f'altitude: {status.get("altitude"):.3f}\n'
             f'horizontal range: {status.get("horizontal range"):.3f}\n'
-            f'acceleration: {status.get("acceleration"):.0f}\n'
             f'mass rocket: {status.get("mass rocket"):.3f}\n'
             f'thrust: {status.get("thrust"):.3f}\n'
             f'drag: {status.get("drag"):.3f}\n'
             f'gravity: {status.get("gravity"):.3f}\n'
+            f'acceleration: {status.get("acceleration"):.3f}\n'
         )
         # self.window.addstr(status_message)
         # self.window.refresh()
