@@ -2,11 +2,25 @@
 '''
 from pprint import pprint
 import re
+from recordtype import recordtype
 import numpy as np
 import pandas as pd
 
+RocketParams = recordtype(
+    'RocketParams',
+    'dry_mass, fuel_mass, motor_isp, max_thrust, drag_coefficient, '
+    'rocket_area, vel, beta, alt, thrust_control'
+)
+
+DisplayParams = recordtype(
+    'DisplayParams',
+    'time_interval, flight_duration, vel_min_max, beta_min_max, '
+    'alt_min_max, theta_min_max, acc_min_max'
+)
+
+
 def construct_control_array(file_name, delta_t, t_max):
-    rocket_control_df = pd.read_excel('mintoc_gravity_turn.xlsx')
+    rocket_control_df = pd.read_excel(file_name)
     t = rocket_control_df['t']
     u = rocket_control_df['u']
 
@@ -33,28 +47,36 @@ def read_rocket_config(config_file_name):
             except AttributeError:
                 pass
 
-    keys = ['dry_mass', 'fuel_mass', 'motor_isp',
-            'max_thrust', 'drag_coefficient', 'rocket_area',
-            'v_rocket', 'flight_angle', 'altitude',
-            'time_interval', 'flight_duration',
-            'speed_min_max', 'flight_angle_min_max', 'altitude_min_max',
-            'h_range_min_max', 'acceleration_min_max', 'u']
-    rocket_config_dict = {}
-    for i in range(11):
-        rocket_config_dict[keys[i]] = float(values[i])
+    rocket_params = RocketParams(*[None]*10)
+    display_params = DisplayParams(*[None]*7)
 
-    for i in range(11, 16):
-        min_max = []
-        for val in values[i].split(','):
-            min_max.append(float(val))
-        rocket_config_dict[keys[i]] = tuple(min_max)
+    rocket_params.dry_mass = float(values[0])
+    rocket_params.fuel_mass = float(values[1])
+    rocket_params.motor_isp = float(values[2])
+    rocket_params.max_thrust = float(values[3])
+    rocket_params.drag_coefficient = float(values[4])
+    rocket_params.rocket_area = float(values[5])
+    rocket_params.vel = float(values[6])
+    rocket_params.beta = float(values[7])
+    rocket_params.alt = float(values[8])
 
-    rocket_config_dict[keys[16]] = construct_control_array(
+    display_params.time_interval = float(values[9])
+    display_params.flight_duration = float(values[10])
+    display_params.vel_min_max = tuple([float(v) for v in values[11].split(',')])
+    display_params.beta_min_max = tuple([float(v) for v in values[12].split(',')])
+    display_params.alt_min_max = tuple([float(v) for v in values[13].split(',')])
+    display_params.theta_min_max = tuple([float(v) for v in values[14].split(',')])
+    display_params.acc_min_max = tuple([float(v) for v in values[15].split(',')])
+
+    rocket_params.thrust_control = construct_control_array(
         values[16].strip(),
-        rocket_config_dict.get('time_interval'),
-        rocket_config_dict.get('flight_duration'))
+        display_params.time_interval,
+        display_params.flight_duration)
 
-    return rocket_config_dict
+    return rocket_params, display_params
 
 if __name__ == '__main__':
-    pprint(read_rocket_config('mintoc.cfg'))
+    a, b = read_rocket_config('mintoc.cfg')
+    pprint(a)
+    print('-'*80)
+    pprint(b)
