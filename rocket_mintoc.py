@@ -130,15 +130,15 @@ def launch(rocket_params, display_params):
         rocket.derivatives_gravity_turn).set_integrator('vode')
 
     # initial values
+    theta = 0
     flight_state = State(
         vel=rocket_params.vel,
         beta=rocket_params.beta,
         alt=rocket_params.alt,
-        theta=0,
+        theta=theta,
         fuel_mass=rocket_params.fuel_mass)
 
     rocket.throttle = rocket_params.thrust_control[0]
-    theta = 0
     _time = 0
     rocket_gravity_turn_integrator.set_initial_value(
         np.array(list(asdict(flight_state).values())), _time
@@ -178,7 +178,7 @@ def launch(rocket_params, display_params):
     logger.write_logger()
 
 if __name__ == "__main__":
-    config_file_name = 'rocket.cfg'
+    config_file_name = 'mintoc.cfg'
     if len(sys.argv) == 2:
         config_file_name = sys.argv[1]
 

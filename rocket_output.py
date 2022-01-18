@@ -1,5 +1,5 @@
 ''' various output methods '''
-# import curses
+import curses
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
@@ -15,11 +15,10 @@ class Console:
     '''
 
     def __init__(self):
-        # self.window = curses.initscr()
-        pass
+        self.window = curses.initscr()
 
     def display_status_message(self, status):
-        # self.window.clear()
+        self.window.clear()
         status_message = (
             f'time: {status.get("time"):.0f}\n'
             f'rocket speed: {status.get("vel"):.3f}\n'
@@ -32,14 +31,13 @@ class Console:
             f'gravity: {status.get("gravity"):.3f}\n'
             f'acceleration: {status.get("acc"):.3f}\n'
         )
-        # self.window.addstr(status_message)
-        # self.window.refresh()
-        print(status_message)
+        self.window.addstr(status_message)
+        self.window.refresh()
 
     def stop_window(self):
-        # curses.napms(10_000)
-        # self.window.refresh()
-        # curses.endwin()
+        curses.napms(6_000)
+        self.window.refresh()
+        curses.endwin()
         input('press enter to stop program ...')
 
 
