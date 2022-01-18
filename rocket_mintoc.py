@@ -1,4 +1,6 @@
 ''' test some basic rocket equations
+    based on:
+    https://mintoc.de/index.php/Gravity_Turn_Maneuver
 '''
 import sys
 from dataclasses import dataclass, asdict
