@@ -1,6 +1,7 @@
 ''' test some basic rocket equations
 '''
 import sys
+from dataclasses import dataclass, asdict
 import numpy as np
 from scipy.integrate import ode
 from rocket_input import read_rocket_config
@@ -8,6 +9,16 @@ from rocket_output import Console, OutputLog, MapPlot
 
 
 rad_deg = 180 / np.pi
+
+
+@dataclass
+class State:
+    vel: float
+    beta: float
+    alt: float
+    theta: float
+    fuel_mass: float
+
 
 class RocketPhysics():
 
@@ -62,26 +73,27 @@ class RocketPhysics():
             )
         return k * np.exp(-altitude / self.H) * velocity * velocity
 
-    def derivatives_gravity_turn(self, t, state):
-        ''' calculation of derivatives (annotated with _dot) for a rocket gravity
-            turn equations. This function is input to the scipy integrate ode function
+    def derivatives_gravity_turn(self, t, state):  #pylint: disable=unused-argument
+        ''' Rocket differential equations
+            Calculation of derivatives (annotated with _dot) for a rocket gravity
+            turn. This function is input to the scipy integrate ode function
             arguments:
                 t: time (s) [notice not used in the derivatives but required for ode]
                 state: numpy array of variables, whose derivatives are determined
-                    vel: rocket velocity (m/s)
-                    flight_angle: angle with horizontal reference (radians)
-                    alt: altitude (m)
-                    h_range: horizontal range (m)
+                    vel: rocket velocity (km/s)
+                    beta: angle with horizontal reference (radians)
+                    alt: altitude (km)
+                    theta: horizontal range in degrees (radians)
                     fuel_mass: mass of fuel (kg)
             returns:
-                state_dot: numpy array of derivatative of above variables
+                numpy array of derivatative of above variables
 
             Assumptions:
                 - effects of wind and solar radiation on rocket are zero
                 - trajectory is considered two dimensional
                 - non-rotational spherical Earth
                 - angle of attack is zero, therefore pitch angle is same
-                  as flight angle and lift is neglected
+                  as flight angle and lift are neglected
         '''
         vel, beta, alt, theta, fuel_mass = state  #pylint: disable=unused-variable
 
@@ -118,45 +130,48 @@ def launch(rocket_params, display_params):
         rocket.derivatives_gravity_turn).set_integrator('vode')
 
     # initial values
-    velocity = rocket_params.vel
-    beta = rocket_params.beta
-    altitude = rocket_params.alt
-    fuel_mass = rocket_params.fuel_mass
+    flight_state = State(
+        vel=rocket_params.vel,
+        beta=rocket_params.beta,
+        alt=rocket_params.alt,
+        theta=0,
+        fuel_mass=rocket_params.fuel_mass)
+
     rocket.throttle = rocket_params.thrust_control[0]
     theta = 0
     _time = 0
     rocket_gravity_turn_integrator.set_initial_value(
-        np.array([velocity, beta, altitude, theta, fuel_mass]), _time)
-
+        np.array(list(asdict(flight_state).values())), _time
+    )
     # launch until rocket is back at earth, explodes or is lost to space
     index = 0
-    while (rocket_gravity_turn_integrator.successful() and altitude > -100 and
+    while (rocket_gravity_turn_integrator.successful() and flight_state.alt > -100 and
            _time <= display_params.flight_duration):
 
         rocket.throttle = rocket_params.thrust_control[index]
 
         state = {
             'time': _time,
-            'vel': velocity,
-            'beta': beta * rad_deg,
-            'alt': altitude,
-            'theta': theta * rad_deg,
+            'vel': flight_state.vel,
+            'beta': flight_state.beta * rad_deg,
+            'alt': flight_state.alt,
+            'theta': flight_state.theta * rad_deg,
             'acc': rocket.acceleration,
             'mass': rocket.mass,
             'thrust': rocket.thrust / rocket.mass,
-            'drag': rocket.drag(altitude, velocity) / rocket.mass,
-            'gravity': rocket.gravity(altitude),
+            'drag': rocket.drag(flight_state.alt, flight_state.vel) / rocket.mass,
+            'gravity': rocket.gravity(flight_state.alt),
             'control': rocket_params.thrust_control[index],
             'index': index,
         }
-
         mapper.plot(state)
         console.display_status_message(state)
         logger.log_status(state)
 
         _time += display_params.time_interval
         index += 1
-        velocity, beta, altitude, theta, fuel_mass = (
+
+        flight_state.vel, flight_state.beta, flight_state.alt, flight_state.theta, flight_state.fuel_mass = (
             rocket_gravity_turn_integrator.integrate(_time))
 
     console.stop_window()

@@ -1,22 +1,35 @@
 ''' input rocket configuration
 '''
-from pprint import pprint
+from dataclasses import dataclass
 import re
-from recordtype import recordtype
 import numpy as np
 import pandas as pd
+from pprint import pprint
 
-RocketParams = recordtype(
-    'RocketParams',
-    'dry_mass, fuel_mass, motor_isp, max_thrust, drag_coefficient, '
-    'rocket_area, vel, beta, alt, thrust_control'
-)
 
-DisplayParams = recordtype(
-    'DisplayParams',
-    'time_interval, flight_duration, vel_min_max, beta_min_max, '
-    'alt_min_max, theta_min_max, acc_min_max'
-)
+@dataclass
+class RocketParams:
+    dry_mass: float
+    fuel_mass: float
+    motor_isp: float
+    max_thrust: float
+    drag_coefficient: float
+    rocket_area: float
+    vel: float
+    beta: float
+    alt: float
+    thrust_control: float
+
+
+@dataclass
+class DisplayParams:
+    time_interval: float
+    flight_duration: float
+    vel_min_max: tuple[float, float]
+    beta_min_max: tuple[float, float]
+    alt_min_max: tuple[float, float]
+    theta_min_max: tuple[float, float]
+    acc_min_max: tuple[float, float]
 
 
 def construct_control_array(file_name, delta_t, t_max):

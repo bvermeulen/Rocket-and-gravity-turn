@@ -73,7 +73,6 @@ class MapPlot:
     def __init__(self, rocket_params, display):
         ''' initial all plot settings
         '''
-
         self.fig, axes = plt.subplots(nrows=3, ncols=2, figsize=self.FIGSIZE)
         ax_vel, ax_beta = axes[0]
         ax_alt, ax_theta = axes[1]
