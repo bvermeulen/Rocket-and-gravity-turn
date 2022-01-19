@@ -24,22 +24,17 @@ class State:
 
 class RocketPhysics():
 
-    RADIUS_EARTH = 6e2
-    STANDARD_GRAVITY = 9.81e-3
-    H = 5.6
-    RHO_0 = (1 * 1.2230948554874)
-
-    def __init__(self, rocket_params):
+    def __init__(self, rocket_params, environment_params):
         self.rocket = rocket_params
         self.v_dot = 0
         self.beta_0 = self.rocket.beta
         self._throttle = 0
-        self.fuel_mass = self.rocket.fuel_mass
+        self._fuel_mass = self.rocket.fuel_mass
+        self.env = environment_params
 
-    @classmethod
-    def gravity(cls, altitude):
+    def gravity(self, altitude):
         return (
-            cls.STANDARD_GRAVITY * (cls.RADIUS_EARTH / (cls.RADIUS_EARTH + altitude))**2)
+            self.env.gravity * (self.env.radius / (self.env.radius + altitude))**2)
 
     @property
     def thrust(self):
@@ -48,6 +43,14 @@ class RocketPhysics():
     @property
     def mass(self):
         return self.rocket.dry_mass + self.fuel_mass
+
+    @property
+    def fuel_mass(self):
+        return self._fuel_mass
+
+    @fuel_mass.setter
+    def fuel_mass(self, value):
+        self._fuel_mass = value
 
     @property
     def acceleration(self):
@@ -70,10 +73,8 @@ class RocketPhysics():
         self._throttle = value
 
     def drag(self, altitude, velocity):
-        k = (0.5e3 * self.RHO_0 * self.rocket.rocket_area *
-             self.rocket.drag_coefficient
-            )
-        return k * np.exp(-altitude / self.H) * velocity * velocity
+        k = 0.5 * 1000 * self.env.density * self.rocket.rocket_area * self.env.drag_coefficient
+        return k * np.exp(-altitude / self.env.scale_height) * velocity * velocity
 
     def derivatives_gravity_turn(self, t, state):  #pylint: disable=unused-argument
         ''' Rocket differential equations
@@ -106,27 +107,27 @@ class RocketPhysics():
             self.thrust / self.mass -
             self.drag(alt, vel) / self.mass -
             self.gravity(alt) * cos_beta
-            )
+        )
 
         alt_dot = vel * cos_beta
-        theta_dot = vel * sin_beta / (self.RADIUS_EARTH + alt)
+        theta_dot = vel * sin_beta / (self.env.radius + alt)
 
         beta_dot = (
-            self.gravity(alt) * sin_beta / vel -
-            theta_dot
-            )
+            self.gravity(alt) * sin_beta / vel - theta_dot
+        )
 
-        mass_fuel_dot = -self.thrust / self.rocket.motor_isp / self.STANDARD_GRAVITY
+        mass_fuel_dot = -self.thrust / self.rocket.motor_isp0 / self.env.gravity
         self.fuel_mass = fuel_mass
 
         return np.array(
-            [self.v_dot, beta_dot, alt_dot, theta_dot, mass_fuel_dot])
+            [self.v_dot, beta_dot, alt_dot, theta_dot, mass_fuel_dot]
+        )
 
-def launch(rocket_params, display_params):
+def launch(rocket_params, environment_params, display_params):
     console = Console()
     logger = OutputLog()
     mapper = MapPlot(rocket_params, display_params)
-    rocket = RocketPhysics(rocket_params)
+    rocket = RocketPhysics(rocket_params, environment_params)
 
     rocket_gravity_turn_integrator = ode(
         rocket.derivatives_gravity_turn).set_integrator('vode')
@@ -180,7 +181,7 @@ def launch(rocket_params, display_params):
     logger.write_logger()
 
 if __name__ == "__main__":
-    config_file_name = 'mintoc.cfg'
+    config_file_name = 'mintoc_new.cfg'
     if len(sys.argv) == 2:
         config_file_name = sys.argv[1]
 

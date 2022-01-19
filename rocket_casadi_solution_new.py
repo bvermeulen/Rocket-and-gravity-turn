@@ -5,8 +5,9 @@
 # https://github.com/zegkljan/kos-stuff/tree/master/non-kos-tools/gturn
 # ----------------------------------------------------------------
 import casadi as cs
-import numpy
-from pprint import pprint
+import numpy as np
+import pandas as pd
+from rocket_input import read_rocket_config
 
 
 # noinspection PyPep8Naming
@@ -57,23 +58,13 @@ def compute_gravity_turn(m0, m1, g0, r0, Isp0, Isp1, Fmax, cd, A, H, rho, h_obj,
     qdot = g * cs.sin(x[2]) / x[1] - ddot
 
     # Build the DAE function
-    ode = [
-        mdot,
-        vdot,
-        qdot,
-        hdot,
-        ddot
-    ]
+    ode = [mdot, vdot, qdot, hdot, ddot]
     quad = u
-    dae = {'x': x,
-           'p': cs.vertcat(u, T),
-           'ode': T * cs.vertcat(*ode),
-           'quad': T * quad}
-    I = cs.integrator('I', 'cvodes', dae,
-                      {'t0': 0.0,
-                       'tf': 1.0 / N,
-                       'nonlinear_solver_iteration': 'functional'
-                       })
+    dae = {'x': x, 'p': cs.vertcat(u, T), 'ode': T * cs.vertcat(*ode), 'quad': T * quad}
+    I = cs.integrator(
+        'I', 'cvodes', dae,
+        {'t0': 0.0, 'tf': 1.0 / N, 'nonlinear_solver_iteration': 'functional'}
+    )
 
     # Specify upper and lower bounds as well as initial values for DAE
     # parameters, states and controls
@@ -98,16 +89,16 @@ def compute_gravity_turn(m0, m1, g0, r0, Isp0, Isp1, Fmax, cd, A, H, rho, h_obj,
     x_init = [0.5 * (m0 + m1), 0.5 * v_obj, 0.5 * q_obj, 0.5 * h_obj, 0.0]
 
     # Useful variable block sizes
-    np = 1  # Number of parameters
+    npars = 1  # Number of parameters
     nx = x.size1()  # Number of states
     nu = u.size1()  # Number of controls
     ns = nx + nu  # Number of variables per shooting interval
 
     # Introduce symbolic variables and disassemble them into blocks
-    V = cs.MX.sym('X', N * ns + nx + np)
+    V = cs.MX.sym('X', N * ns + nx + npars)
     P = V[0]
-    X = [V[(np + i * ns):(np + i * ns + nx)] for i in range(0, N + 1)]
-    U = [V[(np + i * ns + nx):(np + (i + 1) * ns)] for i in range(0, N)]
+    X = [V[(npars + i * ns):(npars + i * ns + nx)] for i in range(0, N + 1)]
+    U = [V[(npars + i * ns + nx):(npars + (i + 1) * ns)] for i in range(0, N)]
 
     # Nonlinear constraints and Lagrange objective
     G = []
@@ -132,14 +123,9 @@ def compute_gravity_turn(m0, m1, g0, r0, Isp0, Isp1, Fmax, cd, A, H, rho, h_obj,
 
     # Solve the problem using IPOPT
     nlp = {'x': V, 'f': (m0 - X[-1][0]) / (m0 - m1), 'g': cs.vertcat(*G)}
-    S = cs.nlpsol('S', 'ipopt', nlp, {'ipopt': {'tol': 1e-4,
-                                                'print_level': 5,
-                                                'max_iter': 500}})
-    r = S(x0=x0,
-          lbx=lbx,
-          ubx=ubx,
-          lbg=lbg,
-          ubg=ubg)
+    S = cs.nlpsol(
+        'S', 'ipopt', nlp, {'ipopt': {'tol': 1e-4, 'print_level': 5, 'max_iter': 500}})
+    r = S(x0=x0, lbx=lbx, ubx=ubx, lbg=lbg, ubg=ubg)
     print('RESULT: {}'.format(S.stats()['return_status']))
     if S.stats()['return_status'] in {'Invalid_Number_Detected'}:
         return None
@@ -148,13 +134,13 @@ def compute_gravity_turn(m0, m1, g0, r0, Isp0, Isp1, Fmax, cd, A, H, rho, h_obj,
     f = r['f']
     T = float(x[0])
 
-    t = numpy.linspace(0, T, N + 1)
-    m = numpy.array(x[np::ns]).squeeze()
-    v = numpy.array(x[np + 1::ns]).squeeze()
-    q = numpy.array(x[np + 2::ns]).squeeze()
-    h = numpy.array(x[np + 3::ns]).squeeze()
-    d = numpy.array(x[np + 4::ns]).squeeze()
-    u = numpy.concatenate((numpy.array(x[np + nx::ns]).squeeze(), [0.0]))
+    t = np.linspace(0, T, N + 1)
+    m = np.array(x[npars::ns]).squeeze()
+    v = np.array(x[npars + 1::ns]).squeeze()
+    q = np.array(x[npars + 2::ns]).squeeze()
+    h = np.array(x[npars + 3::ns]).squeeze()
+    d = np.array(x[npars + 4::ns]).squeeze()
+    u = np.concatenate((np.array(x[npars + nx::ns]).squeeze(), [0.0]))
     return {'time': t,
             'mass': m,
             'speed': v,
@@ -163,36 +149,44 @@ def compute_gravity_turn(m0, m1, g0, r0, Isp0, Isp1, Fmax, cd, A, H, rho, h_obj,
             'body_curvature': d,
             'vertical_angle': q}
 
+
 def main():
-    # Artificial model parameters
-    N = 300                   # Number of shooting intervals
-    vel_eps = 1e-3            # Initial velocity (km/s)
+    rocket_params, environment_params, io_params = read_rocket_config('mintoc_new.cfg')
 
     # Vehicle parameters
-    m0   = 11_300                      # Launch mass (kg)
-    m1   = 1_300                       # Dry mass (kg)
-    g0   = 9.81                        # Gravitational acceleration at altitude zero (m/s^2)
-    r0   = 6_000_000                   # Radius at altitude zero (m)
-    Isp0 = 300.0                       # Specific impulse at zero altude (s)
-    Isp1 = 300.0                       # Specific impulse at vacuum (s)
-    Fmax = 600_000                     # Maximum thrust (N)
+    m0   = rocket_params.fuel_mass            # Launch mass (kg)
+    m1   = rocket_params.dry_mass             # Dry mass (kg)
+    Isp0 = rocket_params.motor_isp0           # Specific impulse at zero altude (s)
+    Isp1 = rocket_params.motor_isp1           # Specific impulse at vacuum (s)
+    A    = rocket_params.rocket_area          # Reference area (m^2)
+    Fmax = rocket_params.max_thrust           # Maximum thrust (N)
+    vel_eps = rocket_params.vel               # Initial velocity (m/s)
 
-    # Atmospheric parameters
-    cd  = 0.021                        # Drag coefficients
-    A   = 1.0                          # Reference area (m^2)
-    H   = 5600                         # Scale height (m)
-    rho = (1.0 * 1.2230948554874)      # Density at altitude zero
+    # Environmental parameters
+    g0  = environment_params.gravity          # Gravitational acceleration at altitude zero (m/s^2)
+    r0  = environment_params.radius           # Radius at altitude zero (m)
+    cd  = environment_params.drag_coefficient # Drag coefficients
+    H   = environment_params.scale_height     # Scale height (m)
+    rho = environment_params.density          # Density at altitude zero
 
-    # Target orbit parameters
-    h_obj = 75000                      # Target altitude (m)
-    v_obj = 2287                       # Target velocity (m/s)
-    q_obj = 0.5 * cs.pi                # Target angle to vertical (rad)
+    # Model and target orbit parameters
+    N = 300                                   # Number of shooting intervals
+    h_obj = 75000                             # Target altitude (m)
+    v_obj = 2287                              # Target velocity (m/s)
+    q_obj = 0.5 * cs.pi                       # Target angle to vertical (rad)
+
+    # output file
+    model_file = io_params.model_file
+
 
     result = compute_gravity_turn(
         m0, m1, g0, r0, Isp0, Isp1, Fmax, cd, A, H, rho, h_obj,
         v_obj, q_obj, N=N, vel_eps=vel_eps)
 
-    pprint(result)
+    result_df = pd.DataFrame(result)
+    result_df.to_excel(model_file, index=False)
+    print(result_df.head())
+
 
 if __name__ == '__main__':
     main()
