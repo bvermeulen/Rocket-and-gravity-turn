@@ -151,10 +151,11 @@ def compute_gravity_turn(m0, m1, g0, r0, Isp0, Isp1, Fmax, cd, A, H, rho, h_obj,
 
 
 def main():
-    rocket_params, environment_params, io_params = read_rocket_config('mintoc_new.cfg')
+    rocket_params, environment_params, io_params = read_rocket_config('mintoc_new_old2.cfg')
 
     # Vehicle parameters
-    m0   = rocket_params.fuel_mass            # Launch mass (kg)
+    m0   = (rocket_params.fuel_mass +
+            rocket_params.dry_mass)           # Launch mass (kg)
     m1   = rocket_params.dry_mass             # Dry mass (kg)
     Isp0 = rocket_params.motor_isp0           # Specific impulse at zero altude (s)
     Isp1 = rocket_params.motor_isp1           # Specific impulse at vacuum (s)
@@ -171,8 +172,8 @@ def main():
 
     # Model and target orbit parameters
     N = 300                                   # Number of shooting intervals
-    h_obj = 75000                             # Target altitude (m)
-    v_obj = 2287                              # Target velocity (m/s)
+    h_obj = 75                                # Target altitude (m)
+    v_obj = 2.287                             # Target velocity (m/s)
     q_obj = 0.5 * cs.pi                       # Target angle to vertical (rad)
 
     # output file

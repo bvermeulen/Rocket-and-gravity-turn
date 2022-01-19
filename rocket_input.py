@@ -57,14 +57,6 @@ def read_rocket_config(config_file_name):
         for line in config:
             try:
                 values.append(
-                    re.match(r'^.*:(\d*.*\d).*$', line).group(1))
-                continue
-
-            except AttributeError:
-                pass
-
-            try:
-                values.append(
                     re.match(r'^.*:(.*)$', line).group(1))
 
             except AttributeError:
@@ -107,7 +99,7 @@ def read_rocket_config(config_file_name):
     return rocket_params, environment_params, display_params
 
 if __name__ == '__main__':
-    a, b, c = read_rocket_config('mintoc_new.cfg')
+    a, b, c = read_rocket_config('mintoc_new_old.cfg')
     pprint(a)
     print('-'*80)
     pprint(b)

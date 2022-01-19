@@ -73,7 +73,7 @@ class RocketPhysics():
         self._throttle = value
 
     def drag(self, altitude, velocity):
-        k = 0.5 * 1000 * self.env.density * self.rocket.rocket_area * self.env.drag_coefficient
+        k = 0.5 * self.env.density * self.rocket.rocket_area * self.env.drag_coefficient
         return k * np.exp(-altitude / self.env.scale_height) * velocity * velocity
 
     def derivatives_gravity_turn(self, t, state):  #pylint: disable=unused-argument
@@ -181,7 +181,7 @@ def launch(rocket_params, environment_params, display_params):
     logger.write_logger()
 
 if __name__ == "__main__":
-    config_file_name = 'mintoc_new.cfg'
+    config_file_name = 'mintoc_new_old.cfg'
     if len(sys.argv) == 2:
         config_file_name = sys.argv[1]
 
