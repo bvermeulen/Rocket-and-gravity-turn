@@ -3,6 +3,7 @@
 # (c) Mirko Hahn
 #
 # see: https://mintoc.de/index.php/Gravity_Turn_Maneuver
+#      https://github.com/casadi/casadi/issues/1924
 # ----------------------------------------------------------------
 from casadi import *
 
@@ -19,7 +20,7 @@ Isp  = 300.0              # Specific impulse (s)
 Fmax = 600.0e-3           # Maximum thrust (MN)
 
 # Atmospheric parameters
-cd  = 0.021                        # Drag coefficients
+dc  = 0.021                        # Drag coefficients
 A   = 1.0                          # Reference area (m^2)
 H   = 5.6                          # Scale height (km)
 rho = (1.0 * 1.2230948554874)      # Density at altitude zero
@@ -36,7 +37,7 @@ T = SX.sym('T')                    # Time horizon (s)
 
 # Introduce symbolic expressions for important composite terms
 Fthrust = Fmax * u
-Fdrag   = 0.5e3 * A * cd * rho * exp(-x[3] / H) * x[1]**2
+Fdrag   = 0.5e3 * A * dc * rho * exp(-x[3] / H) * x[1]**2
 r       = x[3] + r0
 g       = g0 * (r0 / r)**2
 vhor    = x[1] * sin(x[2])
@@ -58,8 +59,8 @@ ode = [
     ddot
 ]
 quad = u
-dae = SXFunction("dae", daeIn(x=x, p=vertcat([u, T])), daeOut(ode=T*vertcat(ode), quad=T*quad))
-I = Integrator("I", "cvodes", dae, {'t0': 0.0, 'tf': 1.0 / N})
+dae = {'x': x, 'p': vertcat(u, T), 'ode': T * vertcat(*ode), 'quad': T * quad}
+I = integrator("I", "cvodes", dae, {'t0': 0, 'tf': 1 / N})
 
 # Specify upper and lower bounds as well as initial values for DAE parameters,
 # states and controls
@@ -102,7 +103,7 @@ F = 0.0
 # Build DMS structure
 x0 = p_init + x0_init
 for i in range(0, N):
-    Y = I({'x0': X[i], 'p': vertcat([U[i], P])})
+    Y = I(x0=X[i], p=vertcat([U[i], P]))
     G = G + [Y['xf'] - X[i+1]]
     F = F + Y['qf']
 
@@ -116,8 +117,8 @@ lbx = p_min + x0_min + u_min + (N-1) * (x_min + u_min) + xf_min
 ubx = p_max + x0_max + u_max + (N-1) * (x_max + u_max) + xf_max
 
 # Solve the problem using IPOPT
-nlp = MXFunction("nlp", nlpIn(x=V), nlpOut(f=m0 - X[-1][0], g=vertcat(G)))
-S = NlpSolver("S", "ipopt", nlp, {'tol': 1e-5})
+nlp = Function("nlp", nlpsol_in(x=V), nlpsol_out(f=m0 - X[-1][0], g=vertcat(G)))
+S = nlpsol("S", "ipopt", nlp, {'tol': 1e-5})
 r = S({
     'x0' : x0,
     'lbx': lbx,

@@ -9,3 +9,6 @@ test_reprint.py
 *.xlsx
 test_reprint.py
 
+.python-version
+rocket.cfg.bak
+temp_cd.py
