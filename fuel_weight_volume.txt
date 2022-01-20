@@ -1,0 +1,21 @@
+
+Fuel weight and volume for a LOX LH2 propulsion
+
+Density of liquid oxygen aka LOX is about the same as water, 1141 kg / m^3. Water is 1000 kg/m^3.
+Liquid hydrogen or LH2 is very light instead: 71 kg / m^3. So the density ratio is about 16 in favor of LOX.
+
+Even if you have a 6:1 mass ratio of LOX to LH2, the volume ratio is 6:16 or 1/2.7, ie the hydrogen tank is 2.7 times as big
+as the oxygen tank. If you have the stoichiometric ratio (not optimal for rocket propulsion, but this is what you get from
+electrolyzing water), the oxidizer:fuel mass ratio is 8:1 and the volume ratio is 1:2.
+
+Example 10,000 kg of rocket fuel:
+
+10,000 / 7 * 1 = weight LH2 = 1429 kg
+10,000 / 7 * 6 = weight LOX = 8571 kg
+
+volume LH2 = 1429 / 71   = 20.12 m^3
+volume LOX = 8571 / 1141 =  7.51 m^3
+
+Total volume = 27.63
+
+For a rocket length of 10 meter -> A = 2.763 m^2  -> diameter = 2 * (2.763 / 3.14)^0.5 ~ 1.876 m
