@@ -1,7 +1,9 @@
 ''' input rocket configuration
 '''
-from dataclasses import dataclass
+import sys
 import re
+from dataclasses import dataclass
+from pathlib import Path
 import numpy as np
 import pandas as pd
 from pprint import pprint
@@ -31,6 +33,15 @@ class EnvironmentParams:
 
 
 @dataclass
+class ModelParams:
+    N: int
+    h_obj: float
+    v_obj: float
+    q_obj: float
+    model_file: str
+
+
+@dataclass
 class DisplayParams:
     time_interval: float
     flight_duration: float
@@ -39,7 +50,6 @@ class DisplayParams:
     alt_min_max: tuple[float, float]
     theta_min_max: tuple[float, float]
     acc_min_max: tuple[float, float]
-    model_file: str
 
 
 def construct_control_array(file_name, delta_t, t_max):
@@ -48,7 +58,9 @@ def construct_control_array(file_name, delta_t, t_max):
     u = rocket_control_df['control']
 
     t_resampled = np.arange(0, t_max + 2 * delta_t, delta_t)
-    return np.interp(t_resampled, t, u)
+    u_resampled = np.interp(t_resampled, t, u)
+    pd.DataFrame({'time': t_resampled, 'control': u_resampled}).to_excel('control.xlsx')
+    return u_resampled
 
 
 def read_rocket_config(config_file_name):
@@ -64,7 +76,8 @@ def read_rocket_config(config_file_name):
 
     rocket_params = RocketParams(*[None]*10)
     environment_params = EnvironmentParams(*[None]*5)
-    display_params = DisplayParams(*[None]*8)
+    model_params = ModelParams(*[None]*5)
+    display_params = DisplayParams(*[None]*7)
 
     rocket_params.dry_mass = float(values[0])
     rocket_params.fuel_mass = float(values[1])
@@ -82,26 +95,43 @@ def read_rocket_config(config_file_name):
     environment_params.scale_height = float(values[12])
     environment_params.density = float(values[13])
 
-    display_params.time_interval = float(values[14])
-    display_params.flight_duration = float(values[15])
-    display_params.vel_min_max = tuple([float(v) for v in values[16].split(',')])
-    display_params.beta_min_max = tuple([float(v) for v in values[17].split(',')])
-    display_params.alt_min_max = tuple([float(v) for v in values[18].split(',')])
-    display_params.theta_min_max = tuple([float(v) for v in values[19].split(',')])
-    display_params.acc_min_max = tuple([float(v) for v in values[20].split(',')])
-    display_params.model_file = values[21].strip()
+    model_params.N = int(values[14])
+    model_params.h_obj = float(values[15])
+    model_params.v_obj = float(values[16])
+    model_params.q_obj = float(values[17])
+    model_params.model_file = values[25].strip()
+
+    display_params.time_interval = float(values[18])
+    display_params.flight_duration = float(values[19])
+    display_params.vel_min_max = tuple([float(v) for v in values[20].split(',')])
+    display_params.beta_min_max = tuple([float(v) for v in values[21].split(',')])
+    display_params.alt_min_max = tuple([float(v) for v in values[22].split(',')])
+    display_params.theta_min_max = tuple([float(v) for v in values[23].split(',')])
+    display_params.acc_min_max = tuple([float(v) for v in values[24].split(',')])
 
     rocket_params.thrust_control = construct_control_array(
-        display_params.model_file,
+        model_params.model_file,
         display_params.time_interval,
-        display_params.flight_duration)
+        display_params.flight_duration
+    )
 
-    return rocket_params, environment_params, display_params
+    return rocket_params, environment_params, model_params, display_params
 
 if __name__ == '__main__':
-    a, b, c = read_rocket_config('mintoc_new_old.cfg')
+    config_file_name = 'None'
+    if len(sys.argv) == 2:
+        config_file_name = sys.argv[1]
+
+    config_file_name = Path(config_file_name)
+    if not config_file_name.is_file():
+        print(f'incorrect config file: {config_file_name}')
+        exit()
+
+    a, b, c, d = read_rocket_config(config_file_name)
     pprint(a)
     print('-'*80)
     pprint(b)
     print('-'*80)
     pprint(c)
+    print('-'*80)
+    pprint(d)

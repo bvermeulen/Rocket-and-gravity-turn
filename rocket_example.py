@@ -386,10 +386,12 @@ def Main_simulation(thrust, motor_isp, mass_flow, dry_mass, wet_mass, reference_
 
         force_gravity = Force_Gravity(mass_ship, altitude)
 
+
         density = Atmosphere_Density(altitude)
         dens_rho.append(density)
 
         force_drag = Drag(density, velocity, reference_area)
+        print(force_gravity, force_drag)
         drag.append(force_drag)
 
         acceleration = free_fall_acceleration(force_gravity, mass_ship,

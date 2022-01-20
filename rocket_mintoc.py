@@ -3,6 +3,7 @@
     https://mintoc.de/index.php/Gravity_Turn_Maneuver
 '''
 import sys
+from pathlib import Path
 from dataclasses import dataclass, asdict
 import numpy as np
 from scipy.integrate import ode
@@ -123,14 +124,15 @@ class RocketPhysics():
             [self.v_dot, beta_dot, alt_dot, theta_dot, mass_fuel_dot]
         )
 
-def launch(rocket_params, environment_params, display_params):
+def launch(rocket_params, environment_params, _, display_params):
     console = Console()
     logger = OutputLog()
     mapper = MapPlot(rocket_params, display_params)
     rocket = RocketPhysics(rocket_params, environment_params)
 
     rocket_gravity_turn_integrator = ode(
-        rocket.derivatives_gravity_turn).set_integrator('vode')
+        rocket.derivatives_gravity_turn).set_integrator('vode'
+    )
 
     # initial values
     theta = 0
@@ -139,13 +141,15 @@ def launch(rocket_params, environment_params, display_params):
         beta=rocket_params.beta,
         alt=rocket_params.alt,
         theta=theta,
-        fuel_mass=rocket_params.fuel_mass)
+        fuel_mass=rocket_params.fuel_mass
+    )
 
     rocket.throttle = rocket_params.thrust_control[0]
     _time = 0
     rocket_gravity_turn_integrator.set_initial_value(
         np.array(list(asdict(flight_state).values())), _time
     )
+
     # launch until rocket is back at earth, explodes or is lost to space
     index = 0
     while (rocket_gravity_turn_integrator.successful() and flight_state.alt > -100 and
@@ -181,8 +185,13 @@ def launch(rocket_params, environment_params, display_params):
     logger.write_logger()
 
 if __name__ == "__main__":
-    config_file_name = 'mintoc_new_old.cfg'
+    config_file_name = 'None'
     if len(sys.argv) == 2:
         config_file_name = sys.argv[1]
+
+    config_file_name = Path(config_file_name)
+    if not config_file_name.is_file():
+        print(f'incorrect config file: {config_file_name}')
+        exit()
 
     launch(*read_rocket_config(config_file_name))
