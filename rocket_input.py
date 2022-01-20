@@ -53,6 +53,9 @@ class DisplayParams:
 
 
 def construct_control_array(file_name, delta_t, t_max):
+    if not file_name.is_file():
+        return np.array([])
+
     rocket_control_df = pd.read_excel(file_name)
     t = rocket_control_df['time']
     u = rocket_control_df['control']
