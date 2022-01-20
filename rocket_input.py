@@ -113,7 +113,7 @@ def read_rocket_config(config_file_name):
     display_params.acc_min_max = tuple([float(v) for v in values[24].split(',')])
 
     rocket_params.thrust_control = construct_control_array(
-        model_params.model_file,
+        Path(model_params.model_file),
         display_params.time_interval,
         display_params.flight_duration
     )
