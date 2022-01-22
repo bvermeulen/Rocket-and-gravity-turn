@@ -62,7 +62,6 @@ def construct_control_array(file_name, delta_t, t_max):
 
     t_resampled = np.arange(0, t_max + 2 * delta_t, delta_t)
     u_resampled = np.interp(t_resampled, t, u)
-    pd.DataFrame({'time': t_resampled, 'control': u_resampled}).to_excel('control.xlsx')
     return u_resampled
 
 

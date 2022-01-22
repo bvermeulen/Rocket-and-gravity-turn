@@ -35,7 +35,7 @@ def plot(result_df, rocket, display):
 
     alt_series = result_df['alt'].to_numpy()
     ax_alt.set_xlim(0, display.flight_duration)
-    ax_alt.set_ylim(display.alt_min_max[0], display.alt_min_max[1])
+    ax_alt.set_ylim(0, display.alt_min_max[1])
     alt_plot, = ax_alt.plot(time_series, alt_series, color='black', linewidth=1)
 
     theta_series = result_df['hor_angle'].to_numpy() * rad_degrees

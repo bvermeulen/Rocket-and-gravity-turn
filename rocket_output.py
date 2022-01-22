@@ -68,20 +68,20 @@ class OutputLog:
 
 
 class MapPlot:
-    FIGSIZE = (6, 8)
+    FIGSIZE = (6, 10)
 
     def __init__(self, rocket, environment, display):
         ''' initial all plot settings
         '''
         self.fig = plt.figure(constrained_layout=True, figsize=self.FIGSIZE)
-        gs = GridSpec(4, 2, figure=self.fig)
+        gs = GridSpec(6, 2, figure=self.fig)
         ax_vel = self.fig.add_subplot(gs[0, 0])
         ax_beta = self.fig.add_subplot(gs[0, 1])
         ax_alt = self.fig.add_subplot(gs[1, 0])
         ax_theta = self.fig.add_subplot(gs[1, 1])
         ax_throttle = self.fig.add_subplot(gs[2, 0])
         ax_mass = self.fig.add_subplot(gs[2, 1])
-        ax_traj = self.fig.add_subplot(gs[3, :])
+        ax_traj = self.fig.add_subplot(gs[3:6, :])
 
         ax_vel.set_xlim(0, display.flight_duration)
         ax_vel.set_ylim(display.vel_min_max[0], display.vel_min_max[1])
@@ -108,12 +108,13 @@ class MapPlot:
         self.throttle_plot, = ax_throttle.plot([0], [0], color='red', linewidth=3)
 
         self.radius = environment.radius
-        x_min = self.radius * display.theta_min_max[0] * deg_rad
-        x_max = self.radius * display.theta_min_max[1] * deg_rad
         y_min = self.radius + display.alt_min_max[0]
         y_max = self.radius + display.alt_min_max[1]
+        x_min = self.radius * display.theta_min_max[0] * deg_rad
+        x_max = min(self.radius * display.theta_min_max[1] * deg_rad, y_max)
         ax_traj.set_xlim(x_min, x_max)
         ax_traj.set_ylim(y_min, y_max)
+        ax_traj.set_aspect('equal')
         thetas = np.arange(-0.5*np.pi, 0.5*np.pi, 0.01)
         earth_x_vals, earth_y_vals = [], []
         for theta in thetas:
