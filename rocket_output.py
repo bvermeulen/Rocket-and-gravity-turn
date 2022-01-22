@@ -2,6 +2,7 @@
 import curses
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 import numpy as np
 
 
@@ -13,7 +14,6 @@ class Console:
         the method print_status should be started as a seperate
         thread
     '''
-
     def __init__(self):
         self.window = curses.initscr()
 
@@ -68,13 +68,18 @@ class OutputLog:
 class MapPlot:
     FIGSIZE = (6, 8)
 
-    def __init__(self, rocket_params, display):
+    def __init__(self, rocket, display):
         ''' initial all plot settings
         '''
-        self.fig, axes = plt.subplots(nrows=3, ncols=2, figsize=self.FIGSIZE)
-        ax_vel, ax_beta = axes[0]
-        ax_alt, ax_theta = axes[1]
-        ax_throttle, ax_mass = axes[2]
+        self.fig = plt.figure(constrained_layout=True, figsize=self.FIGSIZE)
+        gs = GridSpec(4, 2, figure=self.fig)
+        ax_vel = self.fig.add_subplot(gs[0, 0])
+        ax_beta = self.fig.add_subplot(gs[0, 1])
+        ax_alt = self.fig.add_subplot(gs[1, 0])
+        ax_theta = self.fig.add_subplot(gs[1, 1])
+        ax_throttle = self.fig.add_subplot(gs[2, 0])
+        ax_mass = self.fig.add_subplot(gs[2, 1])
+        ax_traj = self.fig.add_subplot(gs[3, :])
 
         ax_vel.set_xlim(0, display.flight_duration)
         ax_vel.set_ylim(display.vel_min_max[0], display.vel_min_max[1])
@@ -97,12 +102,35 @@ class MapPlot:
         # self.acc_plot, = ax_acc.plot([0], [0], color='black', linewidth=1)
 
         ax_mass.set_xlim(0, display.flight_duration)
-        ax_mass.set_ylim(0, rocket_params.dry_mass + rocket_params.fuel_mass)
+        ax_mass.set_ylim(0, rocket.dry_mass + rocket.fuel_mass)
         self.mass_plot, = ax_mass.plot([0], [0], color='red', linewidth=3)
 
         ax_throttle.set_xlim(0, display.flight_duration)
         ax_throttle.set_ylim(0, 1.2)
         self.throttle_plot, = ax_throttle.plot([0], [0], color='red', linewidth=3)
+
+        ax_traj.set_xlim(-10_000, 2_000_000)
+        ax_traj.set_ylim(5_500_000, 6_300_000)
+        radius = 6_000_000
+        thetas = np.arange(-0.1*np.pi, 0.5*np.pi, 0.005)
+        x_vals, y_vals = [], []
+        for theta in thetas:
+            x = radius * np.sin(theta)
+            y = radius * np.cos(theta)
+            x_vals.append(x)
+            y_vals.append(y)
+
+        self.traj_plot, = ax_traj.plot(x_vals, y_vals, color='blue', linewidth=3)
+        radius = 6_100_000
+        x_vals, y_vals = [], []
+        for theta in thetas:
+            x = radius * np.sin(theta)
+            y = radius * np.cos(theta)
+            x_vals.append(x)
+            y_vals.append(y)
+        self.traj_plot, = ax_traj.plot(x_vals, y_vals, color='yellow', linewidth=3)
+
+
 
         plt.ion()
         self.fig.show()
