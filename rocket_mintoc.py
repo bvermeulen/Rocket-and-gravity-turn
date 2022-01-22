@@ -109,14 +109,12 @@ class RocketPhysics():
             self.drag(alt, vel) / self.mass -
             self.gravity(alt) * cos_beta
         )
-
         alt_dot = vel * cos_beta
         theta_dot = vel * sin_beta / (self.env.radius + alt)
 
         beta_dot = (
             self.gravity(alt) * sin_beta / vel - theta_dot
         )
-
         mass_fuel_dot = -self.thrust / self.rocket.motor_isp0 / self.env.gravity
         self.fuel_mass = fuel_mass
 
@@ -127,13 +125,12 @@ class RocketPhysics():
 def launch(rocket_params, environment_params, _, display_params):
     console = Console()
     logger = OutputLog()
-    mapper = MapPlot(rocket_params, display_params)
+    mapper = MapPlot(rocket_params, environment_params, display_params)
     rocket = RocketPhysics(rocket_params, environment_params)
 
     rocket_gravity_turn_integrator = ode(
         rocket.derivatives_gravity_turn).set_integrator('vode'
     )
-
     # initial values
     theta = 0
     flight_state = State(
@@ -143,7 +140,6 @@ def launch(rocket_params, environment_params, _, display_params):
         theta=theta,
         fuel_mass=rocket_params.fuel_mass
     )
-
     rocket.throttle = rocket_params.thrust_control[0]
     _time = 0
     rocket_gravity_turn_integrator.set_initial_value(

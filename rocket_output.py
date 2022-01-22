@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import numpy as np
 
+deg_rad = np.pi / 180.0
+rad_deg = 180.0 / np.pi
 
 class Console:
     ''' print the status_dict to the console every 0.5 second
@@ -68,7 +70,7 @@ class OutputLog:
 class MapPlot:
     FIGSIZE = (6, 8)
 
-    def __init__(self, rocket, display):
+    def __init__(self, rocket, environment, display):
         ''' initial all plot settings
         '''
         self.fig = plt.figure(constrained_layout=True, figsize=self.FIGSIZE)
@@ -90,16 +92,12 @@ class MapPlot:
         self.beta_plot, = ax_beta.plot([0], [0], color='black', linewidth=1)
 
         ax_alt.set_xlim(0, display.flight_duration)
-        ax_alt.set_ylim(display.alt_min_max[0], display.alt_min_max[1])
+        ax_alt.set_ylim(0, display.alt_min_max[1])
         self.alt_plot, = ax_alt.plot([0], [0], color='black', linewidth=1)
 
         ax_theta.set_xlim(0, display.flight_duration)
         ax_theta.set_ylim(display.theta_min_max[0], display.theta_min_max[1])
         self.theta_plot, = ax_theta.plot([0], [0], color='black', linewidth=1)
-
-        # ax_acc.set_xlim(0, display.flight_duration)
-        # ax_acc.set_ylim(display.acc_min_max[0], display.acc_min_max[1])
-        # self.acc_plot, = ax_acc.plot([0], [0], color='black', linewidth=1)
 
         ax_mass.set_xlim(0, display.flight_duration)
         ax_mass.set_ylim(0, rocket.dry_mass + rocket.fuel_mass)
@@ -109,28 +107,20 @@ class MapPlot:
         ax_throttle.set_ylim(0, 1.2)
         self.throttle_plot, = ax_throttle.plot([0], [0], color='red', linewidth=3)
 
-        ax_traj.set_xlim(-10_000, 2_000_000)
-        ax_traj.set_ylim(5_500_000, 6_300_000)
-        radius = 6_000_000
-        thetas = np.arange(-0.1*np.pi, 0.5*np.pi, 0.005)
-        x_vals, y_vals = [], []
+        self.radius = environment.radius
+        x_min = self.radius * display.theta_min_max[0] * deg_rad
+        x_max = self.radius * display.theta_min_max[1] * deg_rad
+        y_min = self.radius + display.alt_min_max[0]
+        y_max = self.radius + display.alt_min_max[1]
+        ax_traj.set_xlim(x_min, x_max)
+        ax_traj.set_ylim(y_min, y_max)
+        thetas = np.arange(-0.5*np.pi, 0.5*np.pi, 0.01)
+        earth_x_vals, earth_y_vals = [], []
         for theta in thetas:
-            x = radius * np.sin(theta)
-            y = radius * np.cos(theta)
-            x_vals.append(x)
-            y_vals.append(y)
-
-        self.traj_plot, = ax_traj.plot(x_vals, y_vals, color='blue', linewidth=3)
-        radius = 6_100_000
-        x_vals, y_vals = [], []
-        for theta in thetas:
-            x = radius * np.sin(theta)
-            y = radius * np.cos(theta)
-            x_vals.append(x)
-            y_vals.append(y)
-        self.traj_plot, = ax_traj.plot(x_vals, y_vals, color='yellow', linewidth=3)
-
-
+            earth_x_vals.append(self.radius * np.sin(theta))
+            earth_y_vals.append(self.radius * np.cos(theta))
+        ax_traj.plot(earth_x_vals, earth_y_vals, color='blue', linewidth=1.2)
+        self.traj_plot, = ax_traj.plot([0], [0], color='red', linewidth=1.0)
 
         plt.ion()
         self.fig.show()
@@ -146,25 +136,31 @@ class MapPlot:
         self.acc_series = []
         self.throttle_series = []
         self.mass_series = []
+        self.traj_series_x = []
+        self.traj_series_y = []
 
     def plot(self, state):
         ''' plot the new state
         '''
+        alt = state.get('alt')
+        theta = state.get('theta')
+        radius = self.radius + alt
+        self.traj_series_x.append(radius * np.sin(theta * deg_rad))
+        self.traj_series_y.append(radius * np.cos(theta * deg_rad))
+        self.traj_plot.set_data(self.traj_series_x, self.traj_series_y)
+
         self.vel_series.append(state.get('vel'))
         self.beta_series.append(state.get('beta'))
-        self.alt_series.append(state.get('alt'))
-        self.theta_series.append(state.get('theta'))
-        # self.acceleration_series.append(state.get('acc'))
+        self.alt_series.append(alt)
+        self.theta_series.append(theta)
         self.throttle_series.append(state.get('control'))
         self.mass_series.append(state.get('mass'))
-
         index = state.get('index')
 
         self.vel_plot.set_data(self.time_series[:index+1], self.vel_series)
         self.beta_plot.set_data(self.time_series[:index+1], self.beta_series)
         self.alt_plot.set_data(self.time_series[:index+1], self.alt_series)
         self.theta_plot.set_data(self.time_series[:index+1], self.theta_series)
-        # self.acc_plot.set_data(self.time_series[:index+1], self.acc_series)
         self.throttle_plot.set_data(self.time_series[:index+1], self.throttle_series)
         self.mass_plot.set_data(self.time_series[:index+1], self.mass_series)
 
