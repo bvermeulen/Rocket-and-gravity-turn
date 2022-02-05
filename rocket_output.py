@@ -70,7 +70,7 @@ class OutputLog:
 class MapPlot:
     FIGSIZE = (6, 10)
 
-    def __init__(self, rocket, environment, display):
+    def __init__(self, rocket, environment, model, display):
         ''' initial all plot settings
         '''
         self.fig = plt.figure(constrained_layout=True, figsize=self.FIGSIZE)
@@ -107,28 +107,40 @@ class MapPlot:
         ax_throttle.set_ylim(0, 1.2)
         self.throttle_plot, = ax_throttle.plot([0], [0], color='red', linewidth=3)
 
-        self.radius = environment.radius
-        y_min = self.radius + display.alt_min_max[0]
-        y_max = self.radius + display.alt_min_max[1]
-        x_min = self.radius * display.theta_min_max[0] * deg_rad
-        x_max = min(self.radius * display.theta_min_max[1] * deg_rad, y_max)
+        self.earth_radius = environment.radius
+        display_radius = self.earth_radius + display.alt_min_max[1]
+        y_min = (
+            display_radius * np.cos(display.theta_min_max[1] * deg_rad)
+            if display.theta_min_max[1] < 180 else -display_radius
+        )
+        y_max = display_radius
+        x_min = (
+            display_radius * min(
+                np.sin(display.theta_min_max[0] * deg_rad),
+                np.sin(display.theta_min_max[1] * deg_rad)
+            )
+            if display.theta_min_max[1] < 270 else -display_radius
+        )
+        x_max = (
+            display_radius * np.sin(display.theta_min_max[1] * deg_rad)
+            if display.theta_min_max[1] < 90 else +display_radius
+        )
         ax_traj.set_xlim(x_min, x_max)
         ax_traj.set_ylim(y_min, y_max)
         ax_traj.set_aspect('equal')
-        thetas = np.arange(-0.5*np.pi, 0.5*np.pi, 0.01)
+        thetas = np.arange(0, 2*np.pi, 0.01)
         earth_x_vals, earth_y_vals = [], []
         for theta in thetas:
-            earth_x_vals.append(self.radius * np.sin(theta))
-            earth_y_vals.append(self.radius * np.cos(theta))
+            earth_x_vals.append(self.earth_radius * np.sin(theta))
+            earth_y_vals.append(self.earth_radius * np.cos(theta))
         ax_traj.plot(earth_x_vals, earth_y_vals, color='blue', linewidth=1.2)
         self.traj_plot, = ax_traj.plot([0], [0], color='red', linewidth=1.0)
 
         plt.ion()
         self.fig.show()
 
-        self.time_series = np.arange(
-            0, display.flight_duration + display.time_interval,
-            display.time_interval)
+        step_ = model.time_interval * display.status_update_step
+        self.time_series = np.arange(0, display.flight_duration + step_, step_)
 
         self.vel_series = []
         self.beta_series = []
@@ -140,32 +152,38 @@ class MapPlot:
         self.traj_series_x = []
         self.traj_series_y = []
 
-    def plot(self, state):
-        ''' plot the new state
+    def plot_state_generator(self, new_state=None):
+        ''' generator to plot the new state
         '''
-        alt = state.get('alt')
-        theta = state.get('theta')
-        radius = self.radius + alt
-        self.traj_series_x.append(radius * np.sin(theta * deg_rad))
-        self.traj_series_y.append(radius * np.cos(theta * deg_rad))
-        self.traj_plot.set_data(self.traj_series_x, self.traj_series_y)
+        index = 0
+        while True:
+            state = yield new_state
+            if state is None:
+                yield
 
-        self.vel_series.append(state.get('vel'))
-        self.beta_series.append(state.get('beta'))
-        self.alt_series.append(alt)
-        self.theta_series.append(theta)
-        self.throttle_series.append(state.get('control'))
-        self.mass_series.append(state.get('mass'))
-        index = state.get('index')
+            alt = state.get('alt')
+            theta = state.get('theta')
+            radius = self.earth_radius + alt
+            self.traj_series_x.append(radius * np.sin(theta * deg_rad))
+            self.traj_series_y.append(radius * np.cos(theta * deg_rad))
+            self.traj_plot.set_data(self.traj_series_x, self.traj_series_y)
 
-        self.vel_plot.set_data(self.time_series[:index+1], self.vel_series)
-        self.beta_plot.set_data(self.time_series[:index+1], self.beta_series)
-        self.alt_plot.set_data(self.time_series[:index+1], self.alt_series)
-        self.theta_plot.set_data(self.time_series[:index+1], self.theta_series)
-        self.throttle_plot.set_data(self.time_series[:index+1], self.throttle_series)
-        self.mass_plot.set_data(self.time_series[:index+1], self.mass_series)
+            self.vel_series.append(state.get('vel'))
+            self.beta_series.append(state.get('beta'))
+            self.alt_series.append(alt)
+            self.theta_series.append(theta)
+            self.throttle_series.append(state.get('control'))
+            self.mass_series.append(state.get('mass'))
 
-        self.blit()
+            self.vel_plot.set_data(self.time_series[:index+1], self.vel_series)
+            self.beta_plot.set_data(self.time_series[:index+1], self.beta_series)
+            self.alt_plot.set_data(self.time_series[:index+1], self.alt_series)
+            self.theta_plot.set_data(self.time_series[:index+1], self.theta_series)
+            self.throttle_plot.set_data(self.time_series[:index+1], self.throttle_series)
+            self.mass_plot.set_data(self.time_series[:index+1], self.mass_series)
+
+            self.blit()
+            index += 1
 
     def blit(self):
         self.fig.canvas.draw()

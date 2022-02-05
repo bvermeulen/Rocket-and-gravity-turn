@@ -39,11 +39,12 @@ class ModelParams:
     v_obj: float
     q_obj: float
     model_file: str
+    time_interval: float
 
 
 @dataclass
 class DisplayParams:
-    time_interval: float
+    status_update_step: int
     flight_duration: float
     vel_min_max: tuple[float, float]
     beta_min_max: tuple[float, float]
@@ -78,7 +79,7 @@ def read_rocket_config(config_file_name):
 
     rocket_params = RocketParams(*[None]*10)
     environment_params = EnvironmentParams(*[None]*5)
-    model_params = ModelParams(*[None]*5)
+    model_params = ModelParams(*[None]*6)
     display_params = DisplayParams(*[None]*7)
 
     rocket_params.dry_mass = float(values[0])
@@ -101,19 +102,20 @@ def read_rocket_config(config_file_name):
     model_params.h_obj = float(values[15])
     model_params.v_obj = float(values[16])
     model_params.q_obj = float(values[17])
-    model_params.model_file = values[25].strip()
+    model_params.time_interval = float(values[18])
+    model_params.model_file = values[26].strip()
 
-    display_params.time_interval = float(values[18])
-    display_params.flight_duration = float(values[19])
-    display_params.vel_min_max = tuple([float(v) for v in values[20].split(',')])
-    display_params.beta_min_max = tuple([float(v) for v in values[21].split(',')])
-    display_params.alt_min_max = tuple([float(v) for v in values[22].split(',')])
-    display_params.theta_min_max = tuple([float(v) for v in values[23].split(',')])
-    display_params.acc_min_max = tuple([float(v) for v in values[24].split(',')])
+    display_params.status_update_step = int(values[19])
+    display_params.flight_duration = float(values[20])
+    display_params.vel_min_max = tuple([float(v) for v in values[21].split(',')])
+    display_params.beta_min_max = tuple([float(v) for v in values[22].split(',')])
+    display_params.alt_min_max = tuple([float(v) for v in values[23].split(',')])
+    display_params.theta_min_max = tuple([float(v) for v in values[24].split(',')])
+    display_params.acc_min_max = tuple([float(v) for v in values[25].split(',')])
 
     rocket_params.thrust_control = construct_control_array(
         Path(model_params.model_file),
-        display_params.time_interval,
+        model_params.time_interval,
         display_params.flight_duration
     )
 

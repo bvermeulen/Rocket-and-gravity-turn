@@ -122,10 +122,10 @@ class RocketPhysics():
             [self.v_dot, beta_dot, alt_dot, theta_dot, mass_fuel_dot]
         )
 
-def launch(rocket_params, environment_params, _, display_params):
+def launch(rocket_params, environment_params, model_params, display_params):
     console = Console()
     logger = OutputLog()
-    mapper = MapPlot(rocket_params, environment_params, display_params)
+    mapper = MapPlot(rocket_params, environment_params, model_params, display_params)
     rocket = RocketPhysics(rocket_params, environment_params)
 
     rocket_gravity_turn_integrator = ode(
@@ -148,30 +148,33 @@ def launch(rocket_params, environment_params, _, display_params):
 
     # launch until rocket is back at earth, explodes or is lost to space
     index = 0
+    plot = mapper.plot_state_generator()
+    next(plot)
     while (rocket_gravity_turn_integrator.successful() and flight_state.alt > -100 and
            _time <= display_params.flight_duration):
 
         rocket.throttle = rocket_params.thrust_control[index]
 
-        state = {
-            'time': _time,
-            'vel': flight_state.vel,
-            'beta': flight_state.beta * rad_deg,
-            'alt': flight_state.alt,
-            'theta': flight_state.theta * rad_deg,
-            'acc': rocket.acceleration,
-            'mass': rocket.mass,
-            'thrust': rocket.thrust / rocket.mass,
-            'drag': rocket.drag(flight_state.alt, flight_state.vel) / rocket.mass,
-            'gravity': rocket.gravity(flight_state.alt),
-            'control': rocket_params.thrust_control[index],
-            'index': index,
-        }
-        mapper.plot(state)
-        console.display_status_message(state)
-        logger.log_status(state)
+        if index % display_params.status_update_step == 0:
+            state = {
+                'time': _time,
+                'vel': flight_state.vel,
+                'beta': flight_state.beta * rad_deg,
+                'alt': flight_state.alt,
+                'theta': flight_state.theta * rad_deg,
+                'acc': rocket.acceleration,
+                'mass': rocket.mass,
+                'thrust': rocket.thrust / rocket.mass,
+                'drag': rocket.drag(flight_state.alt, flight_state.vel) / rocket.mass,
+                'gravity': rocket.gravity(flight_state.alt),
+                'control': rocket_params.thrust_control[index],
+                'index': index,
+            }
+            plot.send(state)
+            console.display_status_message(state)
+            logger.log_status(state)
 
-        _time += display_params.time_interval
+        _time += model_params.time_interval
         index += 1
 
         flight_state.vel, flight_state.beta, flight_state.alt, flight_state.theta, flight_state.fuel_mass = (
