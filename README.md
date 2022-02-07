@@ -55,14 +55,16 @@ The gravity turn or zero lift turn is a common maneuver used to launch spacecraf
 # Physical description and model derivation
 For the purposes of this model, we start with the following ODE system proposed by Culler et. al. in [Culler1957]:
 
-<img src="https://render.githubusercontent.com/render/math?math=\dot{v} = \frac{F}{m} - g \cdot \cos \beta \\ v \dot{\beta} &=& g \cdot \sin{\beta}"> 
+<img src="https://render.githubusercontent.com/render/math?math=\dot{v} = \frac{F}{m} - g \cdot \cos \beta">
+          
+<img src="https://render.githubusercontent.com/render/math?math=v\dot{\beta} = g \cdot \sin{\beta}"> 
 
 where v is the speed of the vehicle, g is the gravitational acceleration at the vehicle's current altitude, F is the accelerating force and \beta is the angle between the vertical and the vehicle's velocity vector. In the original version of the model, the authors neglect aspects of the problem:
 
-    Variation of g over altitude
-    Decrease of vehicle mass due to fuel consumption
-    Curvature of the surface
-    Atmospheric drag
+Variation of g over altitude
+Decrease of vehicle mass due to fuel consumption
+Curvature of the surface
+Atmospheric drag
 
 Changes in gravitational acceleration
 
