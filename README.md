@@ -70,7 +70,7 @@ where v is the speed of the vehicle, g is the gravitational acceleration at the 
 
 To account for changes in g, we make the following substitution:
 
-<img src="https://render.githubusercontent.com/render/math?math=g = g_0 \cdot \left(\frac{r_0}{r_0 + h}\right)^2"> 
+<img src="https://render.githubusercontent.com/render/math?math=g = g_0 \cdot \left(\frac{r_0}{r_0 \+ h}\right)^2"> 
 
 where g_0 is the gravitational acceleration at altitude zero and r_0 is the distance of altitude zero from the center of the reference body.
 
