@@ -1,6 +1,18 @@
-''' test some basic rocket equations
-    based on:
-    https://mintoc.de/index.php/Gravity_Turn_Maneuver
+''' Rocket launch
+      - using thrust profile as calculated by rocket_casadi_solution
+        for a gravty turn [rocket_casadi_solution.py]
+
+    based on :
+        https://mintoc.de/index.php/Gravity_Turn_Maneuver
+        providing the gravity turn differential equations
+
+    Config file:
+        parameters for rocket, environment, model and display, see
+        mintoc_launch.cfg as example
+
+    Author:
+        Bruno Vermeulen
+        bruno.vermeulen@hotmail.com
 '''
 import sys
 from pathlib import Path
@@ -174,7 +186,7 @@ def launch(rocket_params, environment_params, model_params, display_params):
             console.display_status_message(state)
             logger.log_status(state)
 
-        _time += model_params.time_interval
+        _time += display_params.time_interval
         index += 1
 
         flight_state.vel, flight_state.beta, flight_state.alt, flight_state.theta, flight_state.fuel_mass = (

@@ -1,4 +1,35 @@
-''' input rocket configuration
+''' input module to read rocket, environment, model and display configuration
+    used by programs rocket_casadi_solution.py and rocket_launch.py
+    Config parameters must be given in the order as shown in the example below:
+        # parameter must be given in this order
+        rocket dry mass (kg)           m_dry  : 2_000
+        rocket fuel mass (kg)          m_fuel : 20_000
+        motor impulse (s) zero alt     Isp0   : 450
+        motor impulse (s) vacuum       Isp1   : 450
+        maximum thrust (N)             Fmax   : 600_000
+        rocket reference area (m^2)    A      : 3.5
+        initial velocity (m / s)       vel    : 1e-3
+        initial flight angle (radians) beta   : 0.000274
+        initial altitude (m)           h      : 0
+        gravity at zero altitude       g0     : 9.81
+        radius at altitude zero        r0     : 6_000_000
+        drag coefficient (_)           cd     : 0.75
+        scale height (m)               H      : 8_500
+        density at zero altitude       rho    : 1.2230948554874
+        number of shooting intervals   N      : 300
+        altitude objective (m)         h_obj  : 200_000
+        velocity objective (m/s)       v_obj  : 8_000
+        beta objective (degrees)       q_obj  : 90
+        trust control file (.xlsx)            : mintoc_gravity_turn_20T_1.xlsx
+        time interval (s)  1.1268             : 1
+        status_update_step                    : 60
+        duration (s)                          : 20_000
+        speed min_max (m/s)                   : 0, 10_000
+        flight angle min max (degrees)        : 0, 110
+        altitude min max (m)                  : 0, 2_000_000
+        h_range min max (degrees)             : 0, 1440
+        acceleration min max (m*s-2)          : -100, 170
+        rocket sprite file                    : rocket_sprite2.png
 '''
 import sys
 import re
@@ -39,11 +70,11 @@ class ModelParams:
     v_obj: float
     q_obj: float
     model_file: str
-    time_interval: float
 
 
 @dataclass
 class DisplayParams:
+    time_interval: float
     status_update_step: int
     flight_duration: float
     vel_min_max: tuple[float, float]
@@ -51,6 +82,7 @@ class DisplayParams:
     alt_min_max: tuple[float, float]
     theta_min_max: tuple[float, float]
     acc_min_max: tuple[float, float]
+    rocket_sprite_file: str
 
 
 def construct_control_array(file_name, delta_t, t_max):
@@ -79,8 +111,8 @@ def read_rocket_config(config_file_name):
 
     rocket_params = RocketParams(*[None]*10)
     environment_params = EnvironmentParams(*[None]*5)
-    model_params = ModelParams(*[None]*6)
-    display_params = DisplayParams(*[None]*7)
+    model_params = ModelParams(*[None]*5)
+    display_params = DisplayParams(*[None]*9)
 
     rocket_params.dry_mass = float(values[0])
     rocket_params.fuel_mass = float(values[1])
@@ -102,20 +134,21 @@ def read_rocket_config(config_file_name):
     model_params.h_obj = float(values[15])
     model_params.v_obj = float(values[16])
     model_params.q_obj = float(values[17])
-    model_params.time_interval = float(values[18])
-    model_params.model_file = values[26].strip()
+    model_params.model_file = values[18].strip()
 
-    display_params.status_update_step = int(values[19])
-    display_params.flight_duration = float(values[20])
-    display_params.vel_min_max = tuple([float(v) for v in values[21].split(',')])
-    display_params.beta_min_max = tuple([float(v) for v in values[22].split(',')])
-    display_params.alt_min_max = tuple([float(v) for v in values[23].split(',')])
-    display_params.theta_min_max = tuple([float(v) for v in values[24].split(',')])
-    display_params.acc_min_max = tuple([float(v) for v in values[25].split(',')])
+    display_params.time_interval = float(values[19])
+    display_params.status_update_step = int(values[20])
+    display_params.flight_duration = float(values[21])
+    display_params.vel_min_max = tuple([float(v) for v in values[22].split(',')])
+    display_params.beta_min_max = tuple([float(v) for v in values[23].split(',')])
+    display_params.alt_min_max = tuple([float(v) for v in values[24].split(',')])
+    display_params.theta_min_max = tuple([float(v) for v in values[25].split(',')])
+    display_params.acc_min_max = tuple([float(v) for v in values[26].split(',')])
+    display_params.rocket_sprite_file = values[27].strip()
 
     rocket_params.thrust_control = construct_control_array(
         Path(model_params.model_file),
-        model_params.time_interval,
+        display_params.time_interval,
         display_params.flight_duration
     )
 
