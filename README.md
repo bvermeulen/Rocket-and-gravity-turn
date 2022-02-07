@@ -52,8 +52,6 @@ h_range min max (degrees)             : 0, 1440
 acceleration min max (m*s-2)          : -100, 170
 rocket sprite file                    : rocket_sprite2.png
 ```
-The code is tested for Python 3.10. 
-
 Once the program starts it gives main parameters in the console and a display of graphs and trajectory.
 
 <img src="rocket_launch.png" alt="rocket" width="70%" />
