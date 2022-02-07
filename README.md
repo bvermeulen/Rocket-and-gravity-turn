@@ -87,7 +87,7 @@ The vehicle's fuel reserve is modelled by two parameters: *m<sub>0</sub>* denote
 
 **Curvature of the reference body's surface**
 
-To accomodate the reference body's curvature, we introduce an additional differential state &theta which represents the change in the vehicle's polar angle with respect to the launch site. The derivative is given by
+To accomodate the reference body's curvature, we introduce an additional differential state *&theta;* which represents the change in the vehicle's polar angle with respect to the launch site. The derivative is given by
 
 <img src="https://render.githubusercontent.com/render/math?math=\dot{\theta} = \frac{v \cdot \sin \beta}{r_0 %2B h}"> 
 
