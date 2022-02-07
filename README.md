@@ -9,7 +9,7 @@ This program will create an excel trhust contril file as defined in the config f
 ```
 python rocket_launch.py mintoc_20T_1.cfg
 ```
-Where the configuration file is
+Where the configuration file `mintoc_20T_1.cfg` is
 ```
 # parameter must be given in this order
 rocket dry mass (kg)           m_dry  : 2_000
