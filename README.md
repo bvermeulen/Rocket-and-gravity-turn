@@ -64,7 +64,7 @@ For the purposes of this model, we start with the following ODE system proposed 
 <img src="https://render.githubusercontent.com/render/math?math=\dot{v} = \frac{F}{m} - g \cdot \cos \beta">
 <img src="https://render.githubusercontent.com/render/math?math=v\dot{\beta} = g \cdot \sin{\beta}"> 
 
-where v is the speed of the vehicle, g is the gravitational acceleration at the vehicle's current altitude, F is the accelerating force and &beta is the angle between the vertical and the vehicle's velocity vector. In the original version of the model, the authors neglect aspects of the problem:
+where v is the speed of the vehicle, g is the gravitational acceleration at the vehicle's current altitude, F is the accelerating force and &beta; is the angle between the vertical and the vehicle's velocity vector. In the original version of the model, the authors neglect aspects of the problem:
 - Variation of g over altitude
 - Decrease of vehicle mass due to fuel consumption
 - Curvature of the surface
@@ -94,7 +94,7 @@ To accomodate the reference body's curvature, we introduce an additional differe
 
 <img src="https://render.githubusercontent.com/render/math?math=\dot{\theta} = \frac{v \cdot \sin \beta}{r_0 %2B h}"> 
 
-Note that the vertical changes as the vehicle moves around the reference body meaning that the derivative of &beta must be changed as well:
+Note that the vertical changes as the vehicle moves around the reference body meaning that the derivative of &beta; must be changed as well:
 
 <img src="https://render.githubusercontent.com/render/math?math=\dot{\beta} = \frac{g \cdot \sin{\beta}}{v} - \frac{v \cdot \sin \beta}{r_0 %2B h}">. 
 
@@ -104,7 +104,7 @@ To model atmospheric drag, we assume that the vehicles draf coefficient c<sub>d<
 
 <img src="https://render.githubusercontent.com/render/math?math=F_{drag} = \frac{1}{2} \rho A c_d v^2"> 
 
-where &rho is the density of the atmosphere and A is the vehicle's reference area. We assume that atmospheric density decays exponentially with altitude:
+where &rho; is the density of the atmosphere and A is the vehicle's reference area. We assume that atmospheric density decays exponentially with altitude:
 
 <img src="https://render.githubusercontent.com/render/math?math=\rho = \rho_0 \cdot e^{-\frac{h}{H}}"> 
 
