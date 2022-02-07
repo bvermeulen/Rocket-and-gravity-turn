@@ -108,7 +108,7 @@ where &rho; is the density of the atmosphere and A is the vehicle's reference ar
 
 <img src="https://render.githubusercontent.com/render/math?math=\rho = \rho_0 \cdot e^{-\frac{h}{H}}"> 
 
-where &rho<sub>0</sub> is the atmospheric density at altitude zero and H is the scale height of the atmosphere. The [drag force] is introduced into the acceleration term:
+where &rho;<sub>0</sub> is the atmospheric density at altitude zero and H is the scale height of the atmosphere. The [drag force] is introduced into the acceleration term:
 
 <img src="https://render.githubusercontent.com/render/math?math=\dot{v} = \frac{F - F_{drag}}{m} - g \cdot \cos \beta">. 
 
