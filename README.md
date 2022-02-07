@@ -103,7 +103,7 @@ Note that the vertical changes as the vehicle moves around the reference body me
 
 **Atmospheric drag**
 
-To model atmospheric drag, we assume that the vehicles draf coefficient *c<sub>d</sub>* is constant. The drag force is given by
+To model atmospheric drag, we assume that the vehicles drag coefficient *c<sub>d</sub>* is constant. The drag force is given by
 
 <img src="https://render.githubusercontent.com/render/math?math=F_{drag} = \frac{1}{2} \rho A c_d v^2"> 
 
