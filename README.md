@@ -50,9 +50,11 @@ Once the program starts it gives main parameters in the console and a display of
 <img src="rocket_launch.png" alt="rocket" width="70%" />
 
 # Gravity turn
+
 The gravity turn or zero lift turn is a common maneuver used to launch spacecraft into orbit from bodies that have non-negligible atmospheres. The goal of the maneuver is to minimize atmospheric drag by always orienting the vehicle along the velocity vector. In this maneuver, the vehicle's pitch is determined solely by the change of the velocity vector through gravitational acceleration and thrust. The goal is to find a launch configuration and thrust control strategy that achieves a specific orbit with minimal fuel consumption. 
 
 **Physical description and model derivation**
+
 For the purposes of this model, we start with the following ODE system proposed by Culler et. al. in [Culler1957]:
 
 <img src="https://render.githubusercontent.com/render/math?math=\dot{v} = \frac{F}{m} - g \cdot \cos \beta">
@@ -65,6 +67,7 @@ where v is the speed of the vehicle, g is the gravitational acceleration at the 
 - Atmospheric drag
 
 **Changes in gravitational acceleration**
+
 To account for changes in g, we make the following substitution:
 
 <img src="https://render.githubusercontent.com/render/math?math=g = g_0 \cdot \left(\frac{r_0}{r_0 %2B h}\right)^2"> 
@@ -72,6 +75,7 @@ To account for changes in g, we make the following substitution:
 where g_0 is the gravitational acceleration at altitude zero and r_0 is the distance of altitude zero from the center of the reference body.
 
 **Decrease in vehicle mass**
+
 To account for changes in vehicle mass, we consider m a differential state with the following derivative:
 
 <img src="https://render.githubusercontent.com/render/math?math=\dot{m} = -\frac{F}{I_{sp} \cdot g_0}">
