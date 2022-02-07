@@ -1,9 +1,6 @@
 # Rocket
-A rocket launch simulation using a gravity turn maneuver using differential equations as described by Mintoc 
-https://mintoc.de/index.php/Gravity_Turn_Maneuver (see below for further explanation). 
-The Casadi solution is based on the code given in 
-https://mintoc.de/index.php/Gravity_Turn_Maneuver_(Casadi), updated by Mirko Hahn in the github repository 
-https://github.com/zegkljan/kos-stuff/tree/master/non-kos-tools/gturn. 
+A rocket launch simulation using a gravity turn maneuver using differential equations as described by this article in [Mintoc](https://mintoc.de/index.php/Gravity_Turn_Maneuver) (see below for a further description of the differential equations). 
+The Casadi solution is based on the code given in this [link](https://mintoc.de/index.php/Gravity_Turn_Maneuver_(Casadi)), updated by Mirko Hahn and in the github repository [gturn]( https://github.com/zegkljan/kos-stuff/tree/master/non-kos-tools/gturn). 
 
 After setting up the environment, run the programs as follows:
 
