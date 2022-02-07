@@ -53,29 +53,25 @@ Once the program starts it gives main parameters in the console and a display of
 The gravity turn or zero lift turn is a common maneuver used to launch spacecraft into orbit from bodies that have non-negligible atmospheres. The goal of the maneuver is to minimize atmospheric drag by always orienting the vehicle along the velocity vector. In this maneuver, the vehicle's pitch is determined solely by the change of the velocity vector through gravitational acceleration and thrust. The goal is to find a launch configuration and thrust control strategy that achieves a specific orbit with minimal fuel consumption. 
 
 **Physical description and model derivation**
-
 For the purposes of this model, we start with the following ODE system proposed by Culler et. al. in [Culler1957]:
 
 <img src="https://render.githubusercontent.com/render/math?math=\dot{v} = \frac{F}{m} - g \cdot \cos \beta">
 <img src="https://render.githubusercontent.com/render/math?math=v\dot{\beta} = g \cdot \sin{\beta}"> 
 
 where v is the speed of the vehicle, g is the gravitational acceleration at the vehicle's current altitude, F is the accelerating force and \beta is the angle between the vertical and the vehicle's velocity vector. In the original version of the model, the authors neglect aspects of the problem:
-
 - Variation of g over altitude
 - Decrease of vehicle mass due to fuel consumption
 - Curvature of the surface
 - Atmospheric drag
 
 **Changes in gravitational acceleration**
-
 To account for changes in g, we make the following substitution:
 
-<img src="https://render.githubusercontent.com/render/math?math=g = g_0 \cdot \left(\frac{r_0}{r_0 - h}\right)^2"> 
+<img src="https://render.githubusercontent.com/render/math?math=g = g_0 \cdot \left(\frac{r_0}{r_0 %2B h}\right)^2"> 
 
 where g_0 is the gravitational acceleration at altitude zero and r_0 is the distance of altitude zero from the center of the reference body.
 
 **Decrease in vehicle mass**
-
 To account for changes in vehicle mass, we consider m a differential state with the following derivative:
 
 <img src="https://render.githubusercontent.com/render/math?math=\dot{m} = -\frac{F}{I_{sp} \cdot g_0}">
@@ -83,15 +79,16 @@ To account for changes in vehicle mass, we consider m a differential state with 
 where I_{sp} is the specific impulse of the vehicle's engine. Specific impulse is a measure of engine efficiency. For rocket engines, it directly correlates with the engine's exhaust velocity and may vary with atmospheric pressure, velocity, engine temperature and combustion dynamics. For the purposes of this model, we will assume it to be constant.
 
 The vehicle's fuel reserve is modelled by two parameters: m_0 denotes the launch mass (with fuel) and m_1 denotes the dry mass (without fuel).
-Curvature of the reference body's surface
+
+**Curvature of the reference body's surface**
 
 To accomodate the reference body's curvature, we introduce an additional differential state \theta which represents the change in the vehicle's polar angle with respect to the launch site. The derivative is given by
 
-<img src="https://render.githubusercontent.com/render/math?math=\dot{\theta} = \frac{v \cdot \sin \beta}{r_0 + h}">. 
+<img src="https://render.githubusercontent.com/render/math?math=\dot{\theta} = \frac{v \cdot \sin \beta}{r_0 %2B h}"> 
 
 Note that the vertical changes as the vehicle moves around the reference body meaning that the derivative of \beta must be changed as well:
 
-<img src="https://render.githubusercontent.com/render/math?math=\dot{\beta} = \frac{g \cdot \sin{\beta}}{v} - \frac{v \cdot \sin \beta}{r_0 + h}">. 
+<img src="https://render.githubusercontent.com/render/math?math=\dot{\beta} = \frac{g \cdot \sin{\beta}}{v} - \frac{v \cdot \sin \beta}{r_0 %2B h}">. 
 
 **Atmospheric drag**
 
