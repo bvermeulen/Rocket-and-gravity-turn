@@ -45,7 +45,7 @@ The code is tested for Python 3.10.
 
 Once the program starts it gives main parameters in the console and a display of graphs and trajectory.
 
-<img file='python_launch.png' /img>
+<img src="python_launch.png" alt="rocket" width="70%" />
 
 # Gravity turn
 The gravity turn or zero lift turn is a common maneuver used to launch spacecraft into orbit from bodies that have non-negligible atmospheres. The goal of the maneuver is to minimize atmospheric drag by always orienting the vehicle along the velocity vector. In this maneuver, the vehicle's pitch is determined solely by the change of the velocity vector through gravitational acceleration and thrust. The goal is to find a launch configuration and thrust control strategy that achieves a specific orbit with minimal fuel consumption. 
