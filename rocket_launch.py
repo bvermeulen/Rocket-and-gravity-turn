@@ -11,7 +11,7 @@
         mintoc_launch.cfg as example
 
     Author:
-        Bruno Vermeulen
+        Bruno Vermeulen @2022
         bruno.vermeulen@hotmail.com
 '''
 import sys
