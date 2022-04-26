@@ -70,7 +70,7 @@ class OutputLog:
             status.get('beta'),
             status.get('alt'),
             status.get('theta'),
-            status.get('throttle_control'),
+            status.get('control'),
         ]
         self.index += 1
 
