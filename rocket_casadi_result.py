@@ -67,7 +67,7 @@ def main(config_file_name):
 
 
 if __name__ == '__main__':
-    config_file_name = 'None'
+    config_file_name = ''
     if len(sys.argv) == 2:
         config_file_name = sys.argv[1]
 

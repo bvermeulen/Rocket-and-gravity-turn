@@ -129,10 +129,10 @@ def compute_gravity_turn(m0, m1, g0, r0, Isp0, Isp1, Fmax, cd, A, H, rho, h_obj,
     # Solve the problem using IPOPT
     nlp = {'x': V, 'f': (m0 - X[-1][0]) / (m0 - m1), 'g': cs.vertcat(*G)}
     S = cs.nlpsol(
-        'S', 'ipopt', nlp, {'ipopt': {'tol': 1e-4, 'print_level': 5, 'max_iter': 500}}
+        'S', 'ipopt', nlp, {'ipopt': {'tol': 1e-4, 'print_level': 4, 'max_iter': 500}}
     )
     r = S(x0=x0, lbx=lbx, ubx=ubx, lbg=lbg, ubg=ubg)
-    print('RESULT: {}'.format(S.stats()['return_status']))
+    print(f'=====> RESULT: {S.stats()["return_status"]}')
     if S.stats()['return_status'] in {'Invalid_Number_Detected'}:
         return None
     # Extract state sequences and parameters from result
@@ -141,7 +141,7 @@ def compute_gravity_turn(m0, m1, g0, r0, Isp0, Isp1, Fmax, cd, A, H, rho, h_obj,
     T = float(x[0])
 
     t = np.linspace(0, T, N + 1)
-    m = np.array(x[npars::ns]).squeeze()
+    m = np.array(x[npars + 0::ns]).squeeze()
     v = np.array(x[npars + 1::ns]).squeeze()
     q = np.array(x[npars + 2::ns]).squeeze()
     h = np.array(x[npars + 3::ns]).squeeze()
@@ -200,11 +200,11 @@ def main(config_file):
 
     result_df = pd.DataFrame(result)
     result_df.to_excel(model_file, index=False)
-    print(result_df.head())
+    print(result_df.head(35))
 
 
 if __name__ == '__main__':
-    config_file_name = 'None'
+    config_file_name = ''
     if len(sys.argv) == 2:
         config_file_name = sys.argv[1]
 
