@@ -22,7 +22,7 @@ python rocket_launch.py mintoc_20T_1.cfg
 ```
 Where the configuration file `mintoc_20T_1.cfg` is
 ```
-# parameter must be given in this order
+# parameters must be given in this order
 rocket dry mass (kg)           m_dry  : 2_000
 rocket fuel mass (kg)          m_fuel : 20_000
 motor impulse (s) zero alt     Isp0   : 450
