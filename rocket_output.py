@@ -60,6 +60,7 @@ class Console:
         curses.mvchgat(0, 0, 0, None, None)
         curses.addstr("Press any key to exit ...")
         curses.endwin()
+        input("press any key to exit ...")
 
 
 class OutputLog:
