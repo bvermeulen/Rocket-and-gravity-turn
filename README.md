@@ -78,7 +78,7 @@ where *v* is the speed of the vehicle, *g* is the gravitational acceleration at 
 
 To account for changes in *g*, we make the following substitution:
 
-$g = g_0 \cdot \left(\frac{r_0}{r %2B h}\right)^2$ 
+$g = g_0 \cdot \left(\frac{r_0}{r_0 + h}\right)^2$ 
 
 where *g<sub>0</sub>* is the gravitational acceleration at altitude zero and *r<sub>0</sub>* is the distance of altitude zero from the center of the reference body.
 
@@ -96,7 +96,7 @@ The vehicle's fuel reserve is modelled by two parameters: *m<sub>0</sub>* denote
 
 To accomodate the reference body's curvature, we introduce an additional differential state *&theta;* which represents the change in the vehicle's polar angle with respect to the launch site. The derivative is given by
 
-$\dot{\theta} = \frac{v \cdot \sin \beta}{r_0 %2B h}$ 
+$\dot{\theta} = \frac{v \cdot \sin \beta}{r_0 + h}$ 
 
 Note that the vertical changes as the vehicle moves around the reference body meaning that the derivative of *&beta;* must be changed as well:
 
