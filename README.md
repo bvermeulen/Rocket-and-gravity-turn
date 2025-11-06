@@ -66,7 +66,7 @@ For the purposes of this model, we start with the following ODE system proposed 
 
 $\dot{v} = \frac{F}{m} - g \cdot \cos{\beta}$
 
-$\dot{\beta} = g \cdot \sin{\beta}$
+$v \dot{\beta} = g \cdot \sin{\beta}$
 
 where *v* is the speed of the vehicle, *g* is the gravitational acceleration at the vehicle's current altitude, *F* is the accelerating force and *&beta;* is the angle between the vertical and the vehicle's velocity vector. In the original version of the model, the authors neglect aspects of the problem:
 - Variation of g over altitude
@@ -100,7 +100,7 @@ $\dot{\theta} = \frac{v \cdot \sin \beta}{r_0 + h}$
 
 Note that the vertical changes as the vehicle moves around the reference body meaning that the derivative of *&beta;* must be changed as well:
 
-$\dot{\beta} = \frac{g \cdot \sin{\beta}}{v} - \frac{v \cdot \sin \beta}{r_0 %2B h}$
+$\dot{\beta} = \frac{g \cdot \sin{\beta}}{v} - \frac{v \cdot \sin \beta}{r_0 + h}$
 
 **Atmospheric drag**
 
