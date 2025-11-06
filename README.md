@@ -64,7 +64,7 @@ The gravity turn or zero lift turn is a common maneuver used to launch spacecraf
 
 For the purposes of this model, we start with the following ODE system proposed by Culler et. al. in [Culler1957]:
 
-$\frac{F}{m} - g \cdot \cos \beta$
+$\dot{v} = \frac{F}{m} - g \cdot \cos{\beta}$
 
 $\dot{\beta} = g \cdot \sin{\beta}$
 
@@ -78,7 +78,7 @@ where *v* is the speed of the vehicle, *g* is the gravitational acceleration at 
 
 To account for changes in *g*, we make the following substitution:
 
-<img src="https://render.githubusercontent.com/render/math?math=g = g_0 \cdot \left(\frac{r_0}{r_0 %2B h}\right)^2"> 
+$g = g_0 \cdot \left(\frac{r_0}{r_0 %2B h}\right)^2$ 
 
 where *g<sub>0</sub>* is the gravitational acceleration at altitude zero and *r<sub>0</sub>* is the distance of altitude zero from the center of the reference body.
 
@@ -86,7 +86,7 @@ where *g<sub>0</sub>* is the gravitational acceleration at altitude zero and *r<
 
 To account for changes in vehicle mass, we consider *m* a differential state with the following derivative:
 
-<img src="https://render.githubusercontent.com/render/math?math=\dot{m} = -\frac{F}{I_{sp} \cdot g_0}">
+$\dot{m} = -\frac{F}{I_{sp} \cdot g_0}$
 
 where *I<sub>sp</sub>* is the specific impulse of the vehicle's engine. Specific impulse is a measure of engine efficiency. For rocket engines, it directly correlates with the engine's exhaust velocity and may vary with atmospheric pressure, velocity, engine temperature and combustion dynamics. For the purposes of this model, we will assume it to be constant.
 
@@ -96,24 +96,24 @@ The vehicle's fuel reserve is modelled by two parameters: *m<sub>0</sub>* denote
 
 To accomodate the reference body's curvature, we introduce an additional differential state *&theta;* which represents the change in the vehicle's polar angle with respect to the launch site. The derivative is given by
 
-<img src="https://render.githubusercontent.com/render/math?math=\dot{\theta} = \frac{v \cdot \sin \beta}{r_0 %2B h}"> 
+$\dot{\theta} = \frac{v \cdot \sin \beta}{r_0 %2B h}$ 
 
 Note that the vertical changes as the vehicle moves around the reference body meaning that the derivative of *&beta;* must be changed as well:
 
-<img src="https://render.githubusercontent.com/render/math?math=\dot{\beta} = \frac{g \cdot \sin{\beta}}{v} - \frac{v \cdot \sin \beta}{r_0 %2B h}">. 
+$\dot{\beta} = \frac{g \cdot \sin{\beta}}{v} - \frac{v \cdot \sin \beta}{r_0 %2B h}$
 
 **Atmospheric drag**
 
 To model atmospheric drag, we assume that the vehicles drag coefficient *c<sub>d</sub>* is constant. The drag force is given by
 
-<img src="https://render.githubusercontent.com/render/math?math=F_{drag} = \frac{1}{2} \rho A c_d v^2"> 
+$F_{drag} = \frac{1}{2} \rho A c_d v^2$ 
 
 where *&rho;* is the density of the atmosphere and *A* is the vehicle's reference area. We assume that atmospheric density decays exponentially with altitude:
 
-<img src="https://render.githubusercontent.com/render/math?math=\rho = \rho_0 \cdot e^{-\frac{h}{H}}"> 
+$\rho = \rho_0 \cdot e^{-\frac{h}{H}}$
 
 where *&rho;<sub>0</sub>* is the atmospheric density at altitude zero and *H* is the scale height of the atmosphere. The [drag force] is introduced into the acceleration term:
 
-<img src="https://render.githubusercontent.com/render/math?math=\dot{v} = \frac{F - F_{drag}}{m} - g \cdot \cos \beta">. 
+$\dot{v} = \frac{F - F_{drag}}{m} - g \cdot \cos \beta$
 
 Note that if the vehicle is axially symmetric and oriented in such a way that its symmetry axis is parallel to the velocity vector, it does not experience any lift forces. This model is simplified. It does not account for changes in temperature and atmospheric composition with altitude. Also, *c<sub>d</sub>* varies with fluid viscosity and vehicle velocity. Specifically, drastic changes in *c<sub>d</sub>* occur as the vehicle breaks the sound barrier. This is not accounted for in this model. 
